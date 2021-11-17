@@ -13,17 +13,21 @@ constexpr unsigned char GAME_OVER = 0x14;
 constexpr unsigned char GAME_RESULT = 0x15;
 constexpr unsigned char TIME = 0x16;
 
-// LOCATION 하위 TYPE
+// LOCATION 하위 SUBDATATYPE
 constexpr unsigned char PLAYER = 0x21;
 constexpr unsigned char OBJECT = 0x22;
+
+// LOGIN 하위 SUBDATATYPE
+constexpr unsigned char SELF = 0x31;
+constexpr unsigned char OTHER = 0x32;
 
 #pragma pack(push,1)
 // DATA 형식
 struct SERVER_DATA {
 	unsigned char dataType;
-	unsigned char objectType;
+	unsigned char subDataType;
 	unsigned short id;
-	unsigned short rank;
+	bool mission_result;
 	int x, y, z;
 	int time;
 };
@@ -36,6 +40,7 @@ struct CLIENT_DATA {
 
 // CLIENT INFO
 struct CLIENT_INFO {
+	SOCKET sock;
 	unsigned short id;
 	bool alive;
 	int x, y, z;

@@ -19,6 +19,7 @@
 # Precompiled Headers
 *.gch
 *.pch
+*.ipch
 
 # Libraries
 *.lib
@@ -74,4 +75,5 @@ dkms.conf
 
 # Executables
 
+.vs/
 # End of https://www.toptal.com/developers/gitignore/api/c,c++

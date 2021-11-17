@@ -4,8 +4,8 @@
 #pragma comment(lib,"ws2_32")
 #include <WinSock2.h>
 #include <iostream>
-#include <queue>
-#include <mutex>
+//#include <queue>
+//#include <mutex>
 #include "protocol.h"
 using namespace std;
 
@@ -35,12 +35,37 @@ int recvn(SOCKET s, char* buf, int len, int flags) {
 	return (len - left);
 }
 
-void SC_LOGIN(CLIENT_INFO clientInfo)
+void SC_GAMESTART()
 {
 	SERVER_DATA server_data;
+	server_data.dataType = GAME_START;
+	for (auto& clients : clientInfo) {
+		send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+	}
+}
+
+void SC_LOGIN(int id)
+{
+	// 전달할 유저의 정보 셋팅
+	SERVER_DATA server_data;
 	server_data.dataType = LOGIN;
-	for (int i = 0; i < size(clients); ++i) {
-		send(server_data);
+	server_data.id = clientInfo[id].id;	
+	server_data.x = clientInfo[id].x;
+	server_data.y = clientInfo[id].y;
+	server_data.z = clientInfo[id].z;
+
+	for (auto& clients : clientInfo) {
+		if (true == clients.alive) {
+			// 본인에게 전달
+			if (id == clients.id) {
+				server_data.subDataType = SELF;				
+			}
+			// 다른 유저에게 전달
+			else {
+				server_data.subDataType = OTHER;
+			}
+			send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+		}
 	}
 }
 
@@ -156,13 +181,19 @@ int main(int argc, char* argv[]) {
 		}
 
 		// 접속한 유저 초기 정보 셋팅
+		clientInfo[userCount].sock = client_sock;
 		clientInfo[userCount].alive = true;
 		clientInfo[userCount].id = userCount;
 		clientInfo[userCount].x = 0;
 		clientInfo[userCount].y = 0;
 		clientInfo[userCount].z = 0;
 		
+		// 접속한 유저 정보 전달
+		SC_LOGIN(userCount++);
 
+		// 3명의 유저가 접속하면 게임 시작
+		if(clientInfo[0].alive && clientInfo[1].alive && clientInfo[2].alive)
+			SC_GAMESTART();
 	}
 	closesocket(listen_sock);
 
