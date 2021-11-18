@@ -4,6 +4,7 @@
 #pragma comment(lib,"ws2_32")
 #include <WinSock2.h>
 #include <iostream>
+#include <time.h>
 //#include <queue>
 //#include <mutex>
 #include "protocol.h"
@@ -11,10 +12,12 @@ using namespace std;
 
 #define SERVERPORT 9000
 #define BUFSIZE 512
+#define MAXTIME 100
 
 //queue<CLIENT_DATA*> recvQueue;
 //mutex recvLock;
 CLIENT_INFO clientInfo[3];
+bool startTime = false;
 
 int recvn(SOCKET s, char* buf, int len, int flags) {
 	int received;
@@ -42,6 +45,7 @@ void SC_GAMESTART()
 	for (auto& clients : clientInfo) {
 		send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 	}
+	startTime = true;
 }
 
 void SC_LOGIN(int id)
@@ -100,6 +104,27 @@ void SC_SEND(CLIENT_DATA clientData)
 	//	server_data.mission_result = false;
 	//	send(server_data);
 	//}
+}
+
+DWORD WINAPI SC_TIME(LPVOID arg)
+{
+	// 전달할 유저의 정보 셋팅
+	SERVER_DATA server_data;
+	server_data.dataType = TIME;
+	server_data.time = MAXTIME;		// 초기 시간 제한 값 세팅
+	auto start = clock();
+	int send_time = MAXTIME + 1;
+	while (true) {
+		if (true == startTime && (server_data.time != send_time)) {
+			for (auto& clients : clientInfo) {
+				send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+			}
+		}
+		send_time = server_data.time;
+		auto end = clock();
+		server_data.time -= (int)((end - start) / 1000);
+		start = end;
+	}
 }
 
 DWORD WINAPI S_RECV_PACKET(LPVOID arg) 
@@ -163,6 +188,8 @@ int main(int argc, char* argv[]) {
 	int addrlen;
 	HANDLE hThread;
 	int userCount = 0;
+
+	hThread = CreateThread(NULL, 0, SC_TIME, NULL, 0, NULL);
 
 	while (1) {
 		addrlen = sizeof(clientaddr);
