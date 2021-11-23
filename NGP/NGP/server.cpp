@@ -210,20 +210,20 @@ int main(int argc, char* argv[]) {
 			CloseHandle(hThread);
 		}
 
-		while (1);
+
 
 		//// 접속한 유저 초기 정보 셋팅
-		//clientInfo[userCount].sock = client_sock;
-		//clientInfo[userCount].alive = true;
-		//clientInfo[userCount].id = userCount;
-		//clientInfo[userCount].x = 0;
-		//clientInfo[userCount].y = 0;
-		//clientInfo[userCount].z = 0;
-		//
-		//// 접속한 유저 정보 전달
-		//SC_LOGIN(userCount++);
-		//
-		//// 3명의 유저가 접속하면 게임 시작
+		clientInfo[userCount].sock = client_sock;
+		clientInfo[userCount].alive = true;
+		clientInfo[userCount].id = userCount;
+		clientInfo[userCount].x = 7;
+		clientInfo[userCount].y = 8;
+		clientInfo[userCount].z = 99;
+		
+		// 접속한 유저 정보 전달
+		SC_LOGIN(userCount++);
+		
+		// 3명의 유저가 접속하면 게임 시작
 		//if(clientInfo[0].alive && clientInfo[1].alive && clientInfo[2].alive)
 		//	SC_GAMESTART();
 	}

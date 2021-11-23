@@ -7,8 +7,16 @@
 #include "..\NGP\NGP\protocol.h"
 using namespace std;
 
+DWORD WINAPI C_SAVE_PACKET(LPVOID arg);
+
 class Network {
 	bool start = false;
+	HANDLE hThread;
+	CLIENT_INFO clients[3];
+	int id;
+	int game_time;
 public:
+
+	void C_UPDATE(SERVER_DATA server_data);
 	void network();
 };

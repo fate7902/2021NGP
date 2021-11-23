@@ -1,5 +1,48 @@
 #include "network.h"
 
+void Network::C_UPDATE(SERVER_DATA server_data)
+{
+	cout << "update" << endl;
+	switch (server_data.dataType)
+	{
+	case LOCATION: // 플레이어 위치값
+		clients[server_data.id].x = server_data.x;
+		clients[server_data.id].y = server_data.y;
+		clients[server_data.id].z = server_data.z;
+		break;
+	case LOGIN: // 플레이어 접속
+		id = server_data.id;
+		clients[server_data.id].alive = true;
+		clients[server_data.id].x = server_data.x;
+		clients[server_data.id].y = server_data.y;
+		clients[server_data.id].z = server_data.z;
+		break;
+	case GAME_START:   // 게임 시작
+		start = true;
+		break;
+	case TIME: // 시간
+		game_time = server_data.time;
+		break;
+	}
+}
+
+DWORD WINAPI C_SAVE_PACKET(LPVOID arg)
+{
+	SOCKET sock = (SOCKET)arg;
+	SERVER_DATA server_data;
+
+	Network network;
+
+	while (true) {
+		recv(sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+		
+		network.C_UPDATE(server_data);
+	}
+
+	closesocket(sock);
+	return 0;
+}
+
 void Network::network()
 {
 	int retval;
@@ -21,19 +64,21 @@ void Network::network()
 	if (SOCKET_ERROR == retval)
 		cout << "connect 에러" << endl;
 
+	hThread = CreateThread(NULL, 0, C_SAVE_PACKET, (LPVOID)sock, NULL, NULL);
+	
 	while (true) {
-		CLIENT_DATA clientData;
-		clientData.id = 23;
-		clientData.type = MOVE_RIGHT;
+		//CLIENT_DATA clientData;
+		//clientData.id = 23;
+		//clientData.type = MOVE_RIGHT;
 
-		// 고정 길이
-		retval = send(sock, (char*)&clientData, sizeof(CLIENT_DATA), 0);
-		if (SOCKET_ERROR == retval) {
-			cout << "send 에러" << endl;
-			break;
-		}
+		//// 고정 길이
+		//retval = send(sock, (char*)&clientData, sizeof(CLIENT_DATA), 0);
+		//if (SOCKET_ERROR == retval) {
+		//	cout << "send 에러" << endl;
+		//	break;
+		//}
 
-		if (start != true)
-			continue;
+		//if (start != true)
+		//	continue;
 	}
 }

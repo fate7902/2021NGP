@@ -162,6 +162,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
         std::cout << "GLEW LInitialized\n";
 
     net.network();
+    while (1);
 
     ReadObj("cube.obj", vPosData, vNormalData, vTextureCoordinateData, indexData, vertexCount, indexCount, false);
     ReadObj("sphere.obj", vPosDatas, vNormalDatas, vTextureCoordinateDatas, indexDatas, vertexCounts, indexCounts, true);
