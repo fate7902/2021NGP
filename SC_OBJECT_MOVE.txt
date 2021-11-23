@@ -1,0 +1,107 @@
+
+
+DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
+{
+    SERVER_DATA server_data;
+    server_data.dataType = LOCATION;
+
+    while (true) {
+        for (int i = 0; i < 2; ++i) {
+            server_data.objectType = i;
+
+            if (i == 0) {
+                //장애물1
+                if (set_Object1 == false) {
+                    server_data.z = M_pointz - 2.0f;
+                }
+                else
+                {
+                    server_data.z += 0.2f;
+                    if (O1_pointz >= 0.0)
+                    {
+                        server_data.z = M_pointz - 2.0f;
+
+                        if (server_data.x == M_pointx - 8)
+                            left_Object = false;
+                        else if (server_data.x = M_pointx - 2)
+                            mid_Object = false;
+                        else if (server_data.x = M_pointx + 4)
+                            right_Object = false;
+
+                        set_Object1 = false;
+                    }
+                }
+            }
+            else if (i == 1) { // 장애물2
+                if (set_Object2 == false) {
+                    server_data.z = M_pointz - 2.0f;
+                    server_data.y = 0.0f;
+                }
+                else
+                {
+                    server_data.z += 0.2f;
+                    if (object2_Height == true) {
+                        server_data.y += 0.1f;
+                        if (server_data.y >= 4.0f)
+                            object2_Height = false;
+                    }
+                    else {
+                        server_data.y -= 0.1f;
+                        if (server_data.y <= 0.0f)
+                            object2_Height = true;
+
+                    }
+
+                    if (server_data.z >= 0.0)
+                    {
+                        server_data.z = M_pointz - 2.0f;
+
+                        if (server_data.x == M_pointx - 4)
+                            left_Object = false;
+                        else if (server_data.x = M_pointx + 3)
+                            mid_Object = false;
+                        else if (server_data.x = M_pointx + 7)
+                            right_Object = false;
+
+                        set_Object2 = false;
+                    }
+
+                }
+            }
+      
+            for (int i = 0; i < size(clients); ++i)
+                send(server_data);
+
+        }
+    }
+}
+
+
+
+
+
+
+
+//-----------------------------------------------------
+DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
+{
+      SERVER_DATA server_data;
+      server_data.dataType = LOCATION;
+
+     while(true){
+	for(int i = 0; i < 2; ++i){
+	    server_data.objectType = i;
+	    if(i == 0){
+                 server_data.z  += 0.2f;
+		
+
+                }
+   	    server_data.x += dx;
+                server_data.y += dy;
+                server_data.z += dz;
+                for (int i = 0; i < size(clients); ++i)
+                     send(server_data);
+
+            }			
+     }
+}
