@@ -10,8 +10,6 @@
 #include "protocol.h"
 using namespace std;
 
-#define SERVERPORT 9000
-#define BUFSIZE 512
 #define MAXTIME 100
 
 //queue<CLIENT_DATA*> recvQueue;
@@ -144,6 +142,11 @@ DWORD WINAPI S_RECV_PACKET(LPVOID arg)
 			break;
 		}
 
+		cout << clientData.id << endl;
+		cout << clientData.type << endl;
+
+		while (1);
+
 		// 큐 사용시
 		//recvLock.lock();
 		//recvQueue.emplace(clientData);
@@ -189,7 +192,7 @@ int main(int argc, char* argv[]) {
 	HANDLE hThread;
 	int userCount = 0;
 
-	hThread = CreateThread(NULL, 0, SC_TIME, NULL, 0, NULL);
+	//hThread = CreateThread(NULL, 0, SC_TIME, NULL, 0, NULL);
 
 	while (1) {
 		addrlen = sizeof(clientaddr);
@@ -207,20 +210,22 @@ int main(int argc, char* argv[]) {
 			CloseHandle(hThread);
 		}
 
-		// 접속한 유저 초기 정보 셋팅
-		clientInfo[userCount].sock = client_sock;
-		clientInfo[userCount].alive = true;
-		clientInfo[userCount].id = userCount;
-		clientInfo[userCount].x = 0;
-		clientInfo[userCount].y = 0;
-		clientInfo[userCount].z = 0;
-		
-		// 접속한 유저 정보 전달
-		SC_LOGIN(userCount++);
+		while (1);
 
-		// 3명의 유저가 접속하면 게임 시작
-		if(clientInfo[0].alive && clientInfo[1].alive && clientInfo[2].alive)
-			SC_GAMESTART();
+		//// 접속한 유저 초기 정보 셋팅
+		//clientInfo[userCount].sock = client_sock;
+		//clientInfo[userCount].alive = true;
+		//clientInfo[userCount].id = userCount;
+		//clientInfo[userCount].x = 0;
+		//clientInfo[userCount].y = 0;
+		//clientInfo[userCount].z = 0;
+		//
+		//// 접속한 유저 정보 전달
+		//SC_LOGIN(userCount++);
+		//
+		//// 3명의 유저가 접속하면 게임 시작
+		//if(clientInfo[0].alive && clientInfo[1].alive && clientInfo[2].alive)
+		//	SC_GAMESTART();
 	}
 	closesocket(listen_sock);
 

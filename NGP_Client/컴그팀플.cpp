@@ -13,6 +13,9 @@
 #include "behind.h"
 #include  <string.h>
 #include "text.h"
+#include "network.h"
+
+#include "..\NGP\NGP\protocol.h"
 using namespace std;
 
 GLchar* vertexsource, * fragmentsource; // 소스코드 저장 변수
@@ -137,6 +140,8 @@ void COLL_CHECK(glm::vec3 user, glm::vec3 obj)
     }
 }
 
+Network net;
+
 //함수들 작성의 시작
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
@@ -155,6 +160,8 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     }
     else
         std::cout << "GLEW LInitialized\n";
+
+    net.network();
 
     ReadObj("cube.obj", vPosData, vNormalData, vTextureCoordinateData, indexData, vertexCount, indexCount, false);
     ReadObj("sphere.obj", vPosDatas, vNormalDatas, vTextureCoordinateDatas, indexDatas, vertexCounts, indexCounts, true);
@@ -706,7 +713,6 @@ void InitTexture() {
     stbi_image_free(data);
 }
 
-
 void Mouse(int button, int state, int x, int y)
 {
     mouseX = (float)(x - (float)600 / 2.0) * (float)(1.0 / (float)(600 / 2.0));
@@ -726,6 +732,7 @@ void Mouse(int button, int state, int x, int y)
         }
     }
 }
+
 GLvoid ObjectTimer(int value) {
 
     COLL_CHECK(narutoCoord, Object2Coord);
@@ -808,7 +815,6 @@ GLvoid ObjectTimer(int value) {
 
 int timer1 = 90;
 bool object2_Height = true;
-
 
 GLvoid TimerFunction(int value) {
 
@@ -1011,7 +1017,6 @@ GLvoid TimerFunction(int value) {
     gravityNaruto();
     glutTimerFunc(1, TimerFunction, value); // 타이머함수 재 설정
 }
-
 
 GLvoid Keyboard(unsigned char key, int x, int y) {
 

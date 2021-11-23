@@ -157,10 +157,12 @@
     <None Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\NGP\NGP\protocol.h" />
     <ClInclude Include="behind.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="monster.h" />
     <ClInclude Include="Naruto.h" />
+    <ClInclude Include="network.h" />
     <ClInclude Include="object1.h" />
     <ClInclude Include="object2.h" />
     <ClInclude Include="ReadObj.h" />
@@ -169,6 +171,7 @@
     <ClInclude Include="text.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="network.cpp" />
     <ClCompile Include="컴그팀플.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
