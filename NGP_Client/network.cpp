@@ -2,41 +2,40 @@
 
 void Network::C_UPDATE(SERVER_DATA server_data)
 {
-	cout << "update" << endl;
 	switch (server_data.dataType)
 	{
 	case LOCATION: // 플레이어 위치값
-		clients[server_data.id].x = server_data.x;
-		clients[server_data.id].y = server_data.y;
-		clients[server_data.id].z = server_data.z;
+		m_clients[server_data.id].x = server_data.x;
+		m_clients[server_data.id].y = server_data.y;
+		m_clients[server_data.id].z = server_data.z;
 		break;
 	case LOGIN: // 플레이어 접속
-		id = server_data.id;
-		clients[server_data.id].alive = true;
-		clients[server_data.id].x = server_data.x;
-		clients[server_data.id].y = server_data.y;
-		clients[server_data.id].z = server_data.z;
+		m_id = server_data.id;
+		m_clients[server_data.id].alive = true;
+		m_clients[server_data.id].x = server_data.x;
+		m_clients[server_data.id].y = server_data.y;
+		m_clients[server_data.id].z = server_data.z;
 		break;
 	case GAME_START:   // 게임 시작
-		start = true;
+		m_start = true;
 		break;
 	case TIME: // 시간
-		game_time = server_data.time;
+		m_game_time = server_data.time;
 		break;
 	}
 }
 
 DWORD WINAPI C_SAVE_PACKET(LPVOID arg)
 {
-	SOCKET sock = (SOCKET)arg;
+	//SOCKET sock = (SOCKET)arg;
+	//Network network;
 	SERVER_DATA server_data;
-
-	Network network;
-
+	Network* network = (Network*)arg;
+	SOCKET sock = network->getSock();
 	while (true) {
 		recv(sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-		
-		network.C_UPDATE(server_data);
+
+		network->C_UPDATE(server_data);
 	}
 
 	closesocket(sock);
@@ -51,8 +50,9 @@ void Network::network()
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		exit(-1);
 
-	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (INVALID_SOCKET == sock)
+	m_sock = socket(AF_INET, SOCK_STREAM, 0);
+	//SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (INVALID_SOCKET == m_sock)
 		cout << "socket 에러" << endl;
 
 	SOCKADDR_IN serveraddr;
@@ -60,11 +60,11 @@ void Network::network()
 	serveraddr.sin_family = AF_INET;
 	serveraddr.sin_addr.S_un.S_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
-	retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
+	retval = connect(m_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
 	if (SOCKET_ERROR == retval)
 		cout << "connect 에러" << endl;
 
-	hThread = CreateThread(NULL, 0, C_SAVE_PACKET, (LPVOID)sock, NULL, NULL);
+	m_hThread = CreateThread(NULL, 0, C_SAVE_PACKET, (LPVOID)this, NULL, NULL);
 	
 	while (true) {
 		//CLIENT_DATA clientData;
@@ -81,4 +81,31 @@ void Network::network()
 		//if (start != true)
 		//	continue;
 	}
+}
+
+void Network::CS_MOVE(char key)
+{
+	CLIENT_DATA client_data;
+	client_data.id = m_id;
+
+	switch (key) {
+	case 'w':
+	case 'W':
+		client_data.type = MOVE_FRONT;
+		break;
+	case 's':
+	case 'S':
+		client_data.type = MOVE_BACK;
+		break;
+	case 'a':
+	case 'A':
+		client_data.type = MOVE_LEFT;
+		break;
+	case 'd':
+	case 'D':
+		client_data.type = MOVE_RIGHT;
+		break;
+	}
+
+	send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);
 }

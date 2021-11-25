@@ -1020,10 +1020,8 @@ GLvoid TimerFunction(int value) {
 }
 
 GLvoid Keyboard(unsigned char key, int x, int y) {
-
-
-    
     if (!gamestart && !gameover) {
+        //net.CS_MOVE(key);
         switch (key) {
         case 'W':
         case 'w':
@@ -1040,6 +1038,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
             boolw2 = false;
             boola = false;
             boold = false;
+
             break;
         case 'A':
         case 'a':
