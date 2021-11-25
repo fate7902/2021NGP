@@ -15,14 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Object Include="cube.obj">
-      <Filter>소스 파일</Filter>
-    </Object>
-    <Object Include="sphere.obj">
-      <Filter>소스 파일</Filter>
-    </Object>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="fragment.glsl">
       <Filter>소스 파일</Filter>
     </None>
@@ -75,5 +67,13 @@
     <ClCompile Include="network.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="cube.obj">
+      <Filter>소스 파일</Filter>
+    </Object>
+    <Object Include="sphere.obj">
+      <Filter>소스 파일</Filter>
+    </Object>
   </ItemGroup>
 </Project>

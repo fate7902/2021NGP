@@ -5,16 +5,28 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 	switch (server_data.dataType)
 	{
 	case LOCATION: // 플레이어 위치값
-		m_clients[server_data.id].x = server_data.x;
-		m_clients[server_data.id].y = server_data.y;
-		m_clients[server_data.id].z = server_data.z;
+		clients[server_data.id].x = server_data.x;
+		clients[server_data.id].y = server_data.y;
+		clients[server_data.id].z = server_data.z;
 		break;
 	case LOGIN: // 플레이어 접속
-		m_id = server_data.id;
-		m_clients[server_data.id].alive = true;
-		m_clients[server_data.id].x = server_data.x;
-		m_clients[server_data.id].y = server_data.y;
-		m_clients[server_data.id].z = server_data.z;
+		switch (server_data.subDataType) {
+		// m_id : 자신 클라이언트 id
+		// m_clients : 모든 클라이언트
+		case SELF:
+			m_id = server_data.id;
+		case OTHER:
+			clients[server_data.id].id = server_data.id;
+			clients[server_data.id].alive = true;
+			clients[server_data.id].x = server_data.x;
+			clients[server_data.id].y = server_data.y;
+			clients[server_data.id].z = server_data.z;
+			break;
+		}
+		for (int i = 0; i < 3; ++i) {
+			cout << i << " - " << clients[i].x << endl;
+		}
+
 		break;
 	case GAME_START:   // 게임 시작
 		m_start = true;
@@ -66,7 +78,7 @@ void Network::network()
 
 	m_hThread = CreateThread(NULL, 0, C_SAVE_PACKET, (LPVOID)this, NULL, NULL);
 	
-	while (true) {
+	//while (true) {
 		//CLIENT_DATA clientData;
 		//clientData.id = 23;
 		//clientData.type = MOVE_RIGHT;
@@ -80,7 +92,7 @@ void Network::network()
 
 		//if (start != true)
 		//	continue;
-	}
+	//}
 }
 
 void Network::CS_MOVE(char key)
@@ -88,6 +100,7 @@ void Network::CS_MOVE(char key)
 	CLIENT_DATA client_data;
 	client_data.id = m_id;
 
+	// switch -> if로 바꿔야 한다. : 동시에 누를 수 있게 ( if문 각각에 send를 해야 한다.)
 	switch (key) {
 	case 'w':
 	case 'W':

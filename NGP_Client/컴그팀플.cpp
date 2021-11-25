@@ -162,7 +162,6 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
         std::cout << "GLEW LInitialized\n";
 
     net.network();
-    while (1);
 
     ReadObj("cube.obj", vPosData, vNormalData, vTextureCoordinateData, indexData, vertexCount, indexCount, false);
     ReadObj("sphere.obj", vPosDatas, vNormalDatas, vTextureCoordinateDatas, indexDatas, vertexCounts, indexCounts, true);
@@ -172,12 +171,11 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     InitShader();
     InitTexture();
 
-
-
     glutDisplayFunc(drawScene);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(Keyboard);
     glutMouseFunc(Mouse);
+
     glutTimerFunc(timer2, TimerFunction, 0);
     glutTimerFunc(3000, ObjectTimer, 0);  //1초
 
@@ -215,8 +213,6 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
     unsigned int projectionLocation;
     unsigned int objcolorLocation;
 
-
-
     if (!gameover && !gamestart && !gameclear) {
         glDisable(GL_DEPTH_TEST);
         //배경-------------------------------
@@ -245,7 +241,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         if (!(map2))
             cameraPos = glm::vec3((10.0f + transz) * sin(glm::radians(setac)), 8.0f, (11.0f + transz + 3.0f) * cos(glm::radians(setac)) + pointz);
         else
-            cameraPos = glm::vec3(narutoCoord.x - 11.0f, 5.0f, -11.5 * 6 - 2.5f - 5.5f);
+            cameraPos = glm::vec3(narutoCoord[net.getMyId()].x - 11.0f, 5.0f, -11.5 * 6 - 2.5f - 5.5f);
         glm::vec4 ang(0.0f, 0.0f, 0.0f, 0.0f);
         ang.x = ang.x - ((10.0f + transz) * sin(glm::radians(setac)));
         ang.z = ang.z - ((10.0f + transz) * cos(glm::radians(setac)));
@@ -271,14 +267,21 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         //투영
         projectionMatrix = glm::perspective(glm::radians(45.0f), (float)600.0f / (float)600.0f, 0.1f, 50.0f);
 
+        // 오브젝트 좌표
         //명령 //그릴 위치 계속 지정 
-        narutoCoord = glm::vec3(pointx, transj, pointz);        //캐릭터의 위치
+        
+        for (const auto& client : net.clients) {
+            if (client.alive) {
+                narutoCoord[client.id] = glm::vec3(client.x, client.y , client.z);        //캐릭터의 위치
+            }
+        }
+
         MonsterCoord = glm::vec3(M_pointx - 1.4, 0.0, M_pointz-20);        //괴물 위치
         Object1Coord = glm::vec3(O1_pointx, 0.0, O1_pointz -40);
         Object2Coord = glm::vec3(O2_pointx, O2_pointy, O2_pointz -40);
         BehindCoord = glm::vec3(B_pointx, 0.0, B_pointz);
 
-        wireCoord[0] = glm::vec3(narutoCoord.x - 0.3, narutoCoord.y + 2.9, narutoCoord.z - 0.45);
+        wireCoord[0] = glm::vec3(narutoCoord[0].x - 0.3, narutoCoord[0].y + 2.9, narutoCoord[0].z - 0.45);
         scalehandfoot = glm::scale(basicChange, glm::vec3(0.1f, 0.5f, 0.1f));         //손과발의 크기 축소(기본행렬)
         rotateMatrixm = glm::rotate(rotateMatrixm, glm::radians(setam), glm::vec3(0.0f, 1.0f, 0.0f));      //몸통 회전
 
@@ -309,8 +312,11 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 
         //바디
-        drawNaruto(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
-
+        for (const auto& client : net.clients) {
+            if (client.alive) {
+                drawNaruto(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix, client.id);
+            }
+        }
 
         drawMonster(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
         drawObject1(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
@@ -736,291 +742,293 @@ void Mouse(int button, int state, int x, int y)
 
 GLvoid ObjectTimer(int value) {
 
-    COLL_CHECK(narutoCoord, Object2Coord);
-    COLL_CHECK(narutoCoord, Object1Coord);
+    if (net.getStart()) {
+        //COLL_CHECK(narutoCoord, Object2Coord);
+        //COLL_CHECK(narutoCoord, Object1Coord);
 
-    num = rand() % 3 + 1; //1~3 
+        num = rand() % 3 + 1; //1~3 
 
-    if (set_Object1 == false && O1_pointz != M_pointz - 2.0f) {
-        switch (num)
-        {
-        case 1:
-            set_Object1 = true;
-            O1_pointx = M_pointx - 8;
-            left_Object = true;
-            break;
-        case 2:
-            set_Object1 = true;
-            O1_pointx = M_pointx - 2;
-            mid_Object = true;
-            break;
-        case 3:
-            set_Object1 = true;
-            O1_pointx = M_pointx + 4;
-            right_Object = true;
-            break;
-        }
-
-    }
-    if (set_Object2 == false && O2_pointz != M_pointz - 2.0f) {
-        num2 = rand() % 2 + 1;
-        if (left_Object == true) {
-            switch (num2)
+        if (set_Object1 == false && O1_pointz != M_pointz - 2.0f) {
+            switch (num)
             {
             case 1:
-                set_Object2 = true;
-                O2_pointx = M_pointx + 3;
-                mid_Object = true;
-                break;
-            case 2:
-                set_Object2 = true;
-                O2_pointx = M_pointx + 7;
-                right_Object = true;
-                break;
-            }
-        }
-        else if (mid_Object == true) {
-            switch (num2)
-            {
-            case 1:
-                set_Object2 = true;
-                O2_pointx = M_pointx - 4;
+                set_Object1 = true;
+                O1_pointx = M_pointx - 8;
                 left_Object = true;
                 break;
             case 2:
-                set_Object2 = true;
-                O2_pointx = M_pointx + 7;
+                set_Object1 = true;
+                O1_pointx = M_pointx - 2;
+                mid_Object = true;
+                break;
+            case 3:
+                set_Object1 = true;
+                O1_pointx = M_pointx + 4;
                 right_Object = true;
                 break;
             }
+
         }
-        else if (right_Object == true) {
-            switch (num2)
-            {
-            case 1:
-                set_Object2 = true;
-                O2_pointx = M_pointx - 4;
-                left_Object = true;
-                break;
-            case 2:
-                set_Object2 = true;
-                O2_pointx = M_pointx + 3;
-                mid_Object = true;
-                break;
+        if (set_Object2 == false && O2_pointz != M_pointz - 2.0f) {
+            num2 = rand() % 2 + 1;
+            if (left_Object == true) {
+                switch (num2)
+                {
+                case 1:
+                    set_Object2 = true;
+                    O2_pointx = M_pointx + 3;
+                    mid_Object = true;
+                    break;
+                case 2:
+                    set_Object2 = true;
+                    O2_pointx = M_pointx + 7;
+                    right_Object = true;
+                    break;
+                }
+            }
+            else if (mid_Object == true) {
+                switch (num2)
+                {
+                case 1:
+                    set_Object2 = true;
+                    O2_pointx = M_pointx - 4;
+                    left_Object = true;
+                    break;
+                case 2:
+                    set_Object2 = true;
+                    O2_pointx = M_pointx + 7;
+                    right_Object = true;
+                    break;
+                }
+            }
+            else if (right_Object == true) {
+                switch (num2)
+                {
+                case 1:
+                    set_Object2 = true;
+                    O2_pointx = M_pointx - 4;
+                    left_Object = true;
+                    break;
+                case 2:
+                    set_Object2 = true;
+                    O2_pointx = M_pointx + 3;
+                    mid_Object = true;
+                    break;
+                }
             }
         }
+        glutTimerFunc(1, ObjectTimer, value); // 타이머함수 재 설정
     }
-    glutTimerFunc(1, ObjectTimer, value); // 타이머함수 재 설정
-
 }
 
 int timer1 = 90;
 bool object2_Height = true;
 
 GLvoid TimerFunction(int value) {
-
-    //장애물1
-    if (set_Object1 == false) {
-        O1_pointz = M_pointz - 2.0f;
-    }
-    else
-    {
-        O1_pointz += 0.2f;
-        if (O1_pointz >= 0.0)
-        {
+    if (net.getStart()) {
+        //장애물1
+        if (set_Object1 == false) {
             O1_pointz = M_pointz - 2.0f;
-
-            if (O1_pointx == M_pointx - 8)
-                left_Object = false;
-            else if (O1_pointx = M_pointx - 2)
-                mid_Object = false;
-            else if (O1_pointx = M_pointx + 4)
-                right_Object = false;
-
-            set_Object1 = false;
         }
-    }
-
-    //장애물2
-    if (set_Object2 == false) {
-        O2_pointz = M_pointz - 2.0f;
-        O2_pointy = 0.0f;
-    }
-    else
-    {
-        O2_pointz += 0.2f;
-        if (object2_Height == true) {
-            O2_pointy += 0.1f;
-            if (O2_pointy >= 4.0f)
-                object2_Height = false;
-        }
-        else {
-            O2_pointy -= 0.1f;
-            if (O2_pointy <= 0.0f)
-                object2_Height = true;
-
-        }
-
-        if (O2_pointz >= 0.0)
+        else
         {
+            O1_pointz += 0.2f;
+            if (O1_pointz >= 0.0)
+            {
+                O1_pointz = M_pointz - 2.0f;
+
+                if (O1_pointx == M_pointx - 8)
+                    left_Object = false;
+                else if (O1_pointx = M_pointx - 2)
+                    mid_Object = false;
+                else if (O1_pointx = M_pointx + 4)
+                    right_Object = false;
+
+                set_Object1 = false;
+            }
+        }
+
+        //장애물2
+        if (set_Object2 == false) {
             O2_pointz = M_pointz - 2.0f;
-
-            if (O2_pointx == M_pointx - 4)
-                left_Object = false;
-            else if (O2_pointx = M_pointx +3)
-                mid_Object = false;
-            else if (O2_pointx = M_pointx + 7)
-                right_Object = false;
-
-            set_Object2 = false;
+            O2_pointy = 0.0f;
         }
-       
-    }
-
-
-
-
-    // 몬스터 이동 
-    M_pointz -= 0.3f;
-    if (M_boolt) {  //다리 회전 
-        M_setat += setatspeed;
-        if (M_setat >= 60.0f) {
-            M_setat = 60.0f;
-            M_boolt = false;
-        }
-    }
-    else {
-        M_setat -= setatspeed;
-        if (M_setat <= -60.0f) {
-            M_setat = -60.0f;
-            M_boolt = true;
-        }
-    }
-    //---------------------------------
-    //뒤 장애물 이동 
-    B_pointz -= 0.1f;
-
-
-
-    if (boolj == true) {
-        transj += jumpspeedup; //노트북 0.005
-        if (transj > 2.3f)
-            boolj = false;
-    }
-
-    else if (transj != 0.0f && boolj2) {
-        transj -= jumpspeeddown;    //노트북 0.005
-        if (transj < 0.0f) {
-            transj = 0.0f;
-            boolj2 = false;
-        }
-    }
-
-    if (leftWire || rightWire) {
-        if (!map2) {
-            if (leftWire) {
-                pointx -= mainwirespeed;
-                pointz -= subwirespeed;
-                if (pointx <= -2.75) {
-                    pointx = -2.25;
-                    setam = 180.0f;
-                    setaLefthand = 60.0f;
-                    leftWire = false;
-                    boolgravity = false;
-                }
+        else
+        {
+            O2_pointz += 0.2f;
+            if (object2_Height == true) {
+                O2_pointy += 0.1f;
+                if (O2_pointy >= 4.0f)
+                    object2_Height = false;
             }
-            if (rightWire) {
-                pointx += mainwirespeed;
-                pointz -= subwirespeed;
-                if (pointx >= 2.75) {
-                    pointx = 2.25;
-                    setam = 180.0f;
-                    setaRighthand = 60.0f;
-                    rightWire = false;
-                    boolgravity = false;
-                }
+            else {
+                O2_pointy -= 0.1f;
+                if (O2_pointy <= 0.0f)
+                    object2_Height = true;
+
+            }
+
+            if (O2_pointz >= 0.0)
+            {
+                O2_pointz = M_pointz - 2.0f;
+
+                if (O2_pointx == M_pointx - 4)
+                    left_Object = false;
+                else if (O2_pointx = M_pointx + 3)
+                    mid_Object = false;
+                else if (O2_pointx = M_pointx + 7)
+                    right_Object = false;
+
+                set_Object2 = false;
+            }
+
+        }
+
+
+
+
+        // 몬스터 이동 
+        M_pointz -= 0.3f;
+        if (M_boolt) {  //다리 회전 
+            M_setat += setatspeed;
+            if (M_setat >= 60.0f) {
+                M_setat = 60.0f;
+                M_boolt = false;
             }
         }
         else {
-            if (leftWire) {
-                pointx += subwirespeed;
-                pointz -= mainwirespeed;
-                if (pointz <= -11.5 * 6 - 10.75) {
-                    pointz = -11.5 * 6 - 10.25;
-                    setam = 90.0f;
-                    setaLefthand = 60.0f;
-                    leftWire = false;
-                    boolgravity = false;
+            M_setat -= setatspeed;
+            if (M_setat <= -60.0f) {
+                M_setat = -60.0f;
+                M_boolt = true;
+            }
+        }
+        //---------------------------------
+        //뒤 장애물 이동 
+        B_pointz -= 0.1f;
+
+
+
+        if (boolj == true) {
+            transj += jumpspeedup; //노트북 0.005
+            if (transj > 2.3f)
+                boolj = false;
+        }
+
+        else if (transj != 0.0f && boolj2) {
+            transj -= jumpspeeddown;    //노트북 0.005
+            if (transj < 0.0f) {
+                transj = 0.0f;
+                boolj2 = false;
+            }
+        }
+
+        if (leftWire || rightWire) {
+            if (!map2) {
+                if (leftWire) {
+                    pointx -= mainwirespeed;
+                    pointz -= subwirespeed;
+                    if (pointx <= -2.75) {
+                        pointx = -2.25;
+                        setam = 180.0f;
+                        setaLefthand = 60.0f;
+                        leftWire = false;
+                        boolgravity = false;
+                    }
+                }
+                if (rightWire) {
+                    pointx += mainwirespeed;
+                    pointz -= subwirespeed;
+                    if (pointx >= 2.75) {
+                        pointx = 2.25;
+                        setam = 180.0f;
+                        setaRighthand = 60.0f;
+                        rightWire = false;
+                        boolgravity = false;
+                    }
                 }
             }
-            if (rightWire) {
-                pointx += subwirespeed;
-                pointz += mainwirespeed;
-                if (pointz >= -11.5 * 6 - 5.25) {
-                    pointz = -11.5 * 6 - 5.75;
-                    setam = 90.0f;
-                    setaRighthand = 60.0f;
-                    rightWire = false;
-                    boolgravity = false;
+            else {
+                if (leftWire) {
+                    pointx += subwirespeed;
+                    pointz -= mainwirespeed;
+                    if (pointz <= -11.5 * 6 - 10.75) {
+                        pointz = -11.5 * 6 - 10.25;
+                        setam = 90.0f;
+                        setaLefthand = 60.0f;
+                        leftWire = false;
+                        boolgravity = false;
+                    }
+                }
+                if (rightWire) {
+                    pointx += subwirespeed;
+                    pointz += mainwirespeed;
+                    if (pointz >= -11.5 * 6 - 5.25) {
+                        pointz = -11.5 * 6 - 5.75;
+                        setam = 90.0f;
+                        setaRighthand = 60.0f;
+                        rightWire = false;
+                        boolgravity = false;
+                    }
                 }
             }
         }
-    }
 
-    if (boolw) { //전진
-  
-        //pointz -= 0.07f;       //노트북 0.007
-  
-           pointz -= 0.2;
-       // if (pointz < -11.5 * 6 - 5.5f) {
-         //   pointz = -11.5 * 6 - 5.75f;
-            //boolw = false;
-           // boold = true;
-          //  setam = 90.0f;
-           // map2 = true;   //이건 ㄱ자로 꺾일때
-        //}
-      //  boolw = false;
-    }
-    else if (boolw2) {
-        pointz -= 0.1;
-    }
+        if (boolw) { //전진
 
-    if (leftWire || rightWire) {
-        setat = 60.0f;
-    }
-    else if (boola || boolw || boold) {
-        if (boolt) {
-            setat += setatspeed;
-            if (setat >= 60.0f) {
-                setat = 60.0f;
-                boolt = false;
+            //pointz -= 0.07f;       //노트북 0.007
+
+            pointz -= 0.2;
+            // if (pointz < -11.5 * 6 - 5.5f) {
+              //   pointz = -11.5 * 6 - 5.75f;
+                 //boolw = false;
+                // boold = true;
+               //  setam = 90.0f;
+                // map2 = true;   //이건 ㄱ자로 꺾일때
+             //}
+           //  boolw = false;
+        }
+        else if (boolw2) {
+            pointz -= 0.1;
+        }
+
+        if (leftWire || rightWire) {
+            setat = 60.0f;
+        }
+        else if (boola || boolw || boold) {
+            if (boolt) {
+                setat += setatspeed;
+                if (setat >= 60.0f) {
+                    setat = 60.0f;
+                    boolt = false;
+                }
+            }
+            else {
+                setat -= setatspeed;
+                if (setat <= -60.0f) {
+                    setat = -60.0f;
+                    boolt = true;
+                }
             }
         }
-        else {
-            setat -= setatspeed;
-            if (setat <= -60.0f) {
-                setat = -60.0f;
-                boolt = true;
-            }
+
+        if (boolgravity) {
+            //transj -= 2.03;  //중력 없앰 
         }
-    }
-
-    if (boolgravity) {
-        //transj -= 2.03;  //중력 없앰 
-    }
-    if (gameover == false && transj < -5) {      // 의범 추가한 죽음 소리 
-        //glEnd();
-        sound5();
-        gameover = true;
-    }
+        if (gameover == false && transj < -5) {      // 의범 추가한 죽음 소리 
+            //glEnd();
+            sound5();
+            gameover = true;
+        }
 
 
-    gravityNaruto();
-    glutTimerFunc(1, TimerFunction, value); // 타이머함수 재 설정
+        gravityNaruto();
+        glutTimerFunc(1, TimerFunction, value); // 타이머함수 재 설정
+    }
 }
 
 GLvoid Keyboard(unsigned char key, int x, int y) {
-    if (!gamestart && !gameover) {
+    if (net.getStart()) {
         //net.CS_MOVE(key);
         switch (key) {
         case 'W':
@@ -1166,7 +1174,7 @@ void Initversion2() {
     pointx = 2.25f;
     pointz = 0.0f;
 
-    narutoCoord = glm::vec3(2.25f, 0.0f, 0.0f);
+    narutoCoord[0] = glm::vec3(2.25f, 0.0f, 0.0f);
     for (int i = 0; i < 2; i++) {
         wireCoord[i] = glm::vec3(0.0f, 0.0f, 0.0f);
     }
@@ -1213,7 +1221,7 @@ void Initversion3() {
     pointx = 2.25f;
     pointz = 0.0f;
 
-    narutoCoord = glm::vec3(2.25f, 0.0f, 0.0f);
+    narutoCoord[0] = glm::vec3(2.25f, 0.0f, 0.0f);
     for (int i = 0; i < 2; i++) {
         wireCoord[i] = glm::vec3(0.0f, 0.0f, 0.0f);
     }
@@ -1257,7 +1265,7 @@ void restart() {
     pointx = 2.25f;
     pointz = 0.0f;
 
-    narutoCoord = glm::vec3(2.25f, 0.0f, 0.0f);
+    narutoCoord[0] = glm::vec3(2.25f, 0.0f, 0.0f);
     for (int i = 0; i < 2; i++) {
         wireCoord[i] = glm::vec3(0.0f, 0.0f, 0.0f);
     }

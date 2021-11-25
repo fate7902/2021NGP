@@ -220,20 +220,20 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 	server_data.dataType = LOCATION;
 	server_data.subDataType = OBJECT;
 	while (true) {
-		if (true == gameStart) {
-			/* 의범 - 오브젝트 자료구조 만든 뒤 각 프레임당 변동값 셋팅 후 적절히 변경하여 사용 */
-			for (const auto& objects : objectInfo) {
-				objects.x += odx;
-				objects.y += ody;
-				objects.z += odz;
-				server_data.id = objects.id;
-				server_data.x = objects.x;
-				server_data.y = objects.y;
-				server_data.z = objects.z;
-				for (const auto& clients : clientInfo)
-					send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-			}
-		}
+		//if (true == gameStart) {
+		//	/* 의범 - 오브젝트 자료구조 만든 뒤 각 프레임당 변동값 셋팅 후 적절히 변경하여 사용 */
+		//	for (const auto& objects : objectInfo) {
+		//		objects.x += odx;
+		//		objects.y += ody;
+		//		objects.z += odz;
+		//		server_data.id = objects.id;
+		//		server_data.x = objects.x;
+		//		server_data.y = objects.y;
+		//		server_data.z = objects.z;
+		//		for (const auto& clients : clientInfo)
+		//			send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+		//	}
+		//}
 	}
 }
 
@@ -292,9 +292,9 @@ int main(int argc, char* argv[]) {
 			clientInfo[userCount].alive = true;
 			clientInfo[userCount].id = userCount;
 			/* 의범 - 초기 접속 유저 위치 셋팅 */
-			clientInfo[userCount].x = 7;
-			clientInfo[userCount].y = 8;
-			clientInfo[userCount].z = 99;
+			clientInfo[userCount].x = -3 + (userCount  * 3);
+			clientInfo[userCount].y = 0;
+			clientInfo[userCount].z = 0;
 
 			// 접속한 유저 정보 전달
 			SC_LOGIN(userCount++);
