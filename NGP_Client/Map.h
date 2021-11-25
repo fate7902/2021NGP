@@ -344,96 +344,11 @@ void drawMap(GLuint program, int vertexCount, GLuint vao[], glm::mat4 viewMatrix
 
 
     }
-    /*
-    //회전부분 난간
-    for (int i = 0; i < 1; i++) {
-
-
-        //난간
-        basicChange = glm::mat4(1.0f);      //초기화   
-        transformMatrix = glm::mat4(1.0f);   //초기화
-        basicChange = glm::translate(basicChange, glm::vec3(-0.5f, -0.5f, -0.5f));   //원점으로 이동(정육면체의 중앙이 원점)
-        transformMatrix = basicChange * transformMatrix;
-        basicChange = glm::mat4(1.0f);      //초기화
-
-        basicChange = glm::scale(basicChange, glm::vec3(6.0f, 1.0f, 2.0f));      //사이즈 조절
-        transformMatrix = basicChange * transformMatrix;   //크기
-
-        basicChange = glm::mat4(1.0f);
-        basicChange = glm::translate(basicChange, glm::vec3(handrailCoord2[i].x, handrailCoord2[i].y, handrailCoord2[i].z));   //건물이 있어야 하는 위치로 이동
-        transformMatrix = basicChange * transformMatrix;
-
-        objColor = glm::vec3(0.3f, 0.3f, 0.3f);
-        transformLocation = glGetUniformLocation(program, "transform");
-        glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-        viewLocation = glGetUniformLocation(program, "viewTransform");
-        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-        projectionLocation = glGetUniformLocation(program, "projectionTransform");
-        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-        objcolorLocation = glGetUniformLocation(program, "objectColor");
-        glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
-        glBindVertexArray(vao[1]);
-        glDrawElements(GL_TRIANGLES, vertexCount * 3, GL_UNSIGNED_INT, 0);
-    }
-
-    for (int i = 0; i < BUILDINGNUMBER3; i++) {
-
-
-        //건물본체
-
-
-        transformMatrix = glm::mat4(1.0f);   //초기화
-        basicChange = glm::mat4(1.0f);      //초기화
-        basicChange = glm::translate(basicChange, glm::vec3(-0.5f, -0.5f, -0.5f));  //원점으로 이동(정육면체의 중앙이 원점)
-        transformMatrix = basicChange * transformMatrix;
-
-        basicChange = glm::mat4(1.0f);      //초기화
-        basicChange = glm::scale(basicChange, glm::vec3(10.0f, 20.0f, 5.0f));      //사이즈 조절
-        transformMatrix = basicChange * transformMatrix;   //크기
-
-        basicChange = glm::mat4(1.0f);
-        basicChange = glm::translate(basicChange, glm::vec3(buildingCoord3[i].x, buildingCoord3[i].y, buildingCoord3[i].z));     //건물이 있어야 하는 위치로 이동
-        transformMatrix = basicChange * transformMatrix;
-
-        objColor = glm::vec3(0.7f, 0.7f, 0.7f);
-        transformLocation = glGetUniformLocation(program, "transform");
-        glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-        viewLocation = glGetUniformLocation(program, "viewTransform");
-        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-        projectionLocation = glGetUniformLocation(program, "projectionTransform");
-        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-        objcolorLocation = glGetUniformLocation(program, "objectColor");
-        glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
-        glBindVertexArray(vao[1]);
-        glDrawElements(GL_TRIANGLES, vertexCount * 3, GL_UNSIGNED_INT, 0);
-
-
-        //난간
-        basicChange = glm::mat4(1.0f);      //초기화   
-        transformMatrix = glm::mat4(1.0f);   //초기화
-        basicChange = glm::translate(basicChange, glm::vec3(-0.5f, -0.5f, -0.5f));   //원점으로 이동(정육면체의 중앙이 원점)
-        transformMatrix = basicChange * transformMatrix;
-        basicChange = glm::mat4(1.0f);      //초기화
-        basicChange = glm::scale(basicChange, glm::vec3(nangansize, 1.0f, 2.0f));      //사이즈 조절
-        transformMatrix = basicChange * transformMatrix;   //크기
-        basicChange = glm::mat4(1.0f);
-        basicChange = glm::translate(basicChange, glm::vec3(handrailCoord3[i].x, handrailCoord3[i].y, handrailCoord3[i].z));   //건물이 있어야 하는 위치로 이동
-        transformMatrix = basicChange * transformMatrix;
-
-        objColor = glm::vec3(0.3f, 0.3f, 0.3f);
-        transformLocation = glGetUniformLocation(program, "transform");
-        glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-        viewLocation = glGetUniformLocation(program, "viewTransform");
-        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-        projectionLocation = glGetUniformLocation(program, "projectionTransform");
-        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-        objcolorLocation = glGetUniformLocation(program, "objectColor");
-        glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
-        glBindVertexArray(vao[1]);
-        glDrawElements(GL_TRIANGLES, vertexCount * 3, GL_UNSIGNED_INT, 0);
-    }*/
+  
 
     //클리어 공간 
+
+    //이거 수정해야함 
 
     transformMatrix = glm::mat4(1.0f);   //초기화
     basicChange = glm::mat4(1.0f);      //초기화

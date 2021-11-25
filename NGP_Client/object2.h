@@ -34,7 +34,6 @@ float O2_setaLefthand = 60.0f;
 
 
 
-
 void drawObject2(GLuint program, int vertexCount, GLuint vao[], GLuint vbo[], glm::mat4 viewMatrix, glm::mat4 projectionMatrix) {
 
     //За·Д 

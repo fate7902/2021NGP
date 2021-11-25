@@ -18,9 +18,6 @@
 //불도저
 
 
-
-
-
 float O1_pointx = 2.25f;
 float O1_pointz = 0.0f;
 
@@ -30,9 +27,6 @@ float O1_setat = 0.0f;      //이동시 다리가 움직이는 애니메이션을 하기위한 각도
 float O1_setam = 180.0f;      //몸통 회전을 맡음
 float O1_setaRighthand = 60.0f;
 float O1_setaLefthand = 60.0f;
-
-
-
 
 
 void drawObject1(GLuint program, int vertexCount, GLuint vao[], GLuint vbo[], glm::mat4 viewMatrix, glm::mat4 projectionMatrix) {

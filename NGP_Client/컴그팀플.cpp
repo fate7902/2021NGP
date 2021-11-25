@@ -35,8 +35,7 @@ GLvoid TimerFunction(int value);
 GLvoid ObjectTimer(int value);
 GLvoid Keyboard(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
-void Initversion2();
-void Initversion3();
+
 void restart();
 
 //텍스처
@@ -93,7 +92,7 @@ bool mid_Object = false;
 bool set_Object1 = false;
 bool set_Object2 = false;
 
-bool boolw2 = false;
+bool boolw2 = false;  //대각선 이동시 속도 줄이기 위함 
 //타이머 1
 unsigned int timer2 = 1000;
 //바닥을 위한 좌표
@@ -281,7 +280,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         Object2Coord = glm::vec3(O2_pointx, O2_pointy, O2_pointz -40);
         BehindCoord = glm::vec3(B_pointx, 0.0, B_pointz);
 
-        wireCoord[0] = glm::vec3(narutoCoord[0].x - 0.3, narutoCoord[0].y + 2.9, narutoCoord[0].z - 0.45);
+    
         scalehandfoot = glm::scale(basicChange, glm::vec3(0.1f, 0.5f, 0.1f));         //손과발의 크기 축소(기본행렬)
         rotateMatrixm = glm::rotate(rotateMatrixm, glm::radians(setam), glm::vec3(0.0f, 1.0f, 0.0f));      //몸통 회전
 
@@ -432,8 +431,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         glBindTexture(GL_TEXTURE_2D, texture6);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
-  //  glClearColor(0.0, 0.0, 0.0, 0.0);
- //   glClear(GL_COLOR_BUFFER_BIT);
+
     draw_stuff();  //텍스트
 
     glutSwapBuffers(); // 화면에 출력하기
@@ -566,18 +564,7 @@ void InitBuffer()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(int), indexData, GL_STATIC_DRAW);
 
-    //와이어
-    glBindVertexArray(vao[2]); //--- VAO를 바인드하기
-    glGenBuffers(3, vbo); //--- 2개의 VBO를 지정하고 할당하기
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(wireCoord), wireCoord, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(floorColor), floorColor, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(1);
 
 
     //배경
@@ -728,14 +715,7 @@ void Mouse(int button, int state, int x, int y)
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
         if (mouseX > -0.3 && mouseX < 0.3 && mouseY>-0.1 && mouseY < 0.1) {
             gamestart = false;
-            if (gameclear && version2 == false) {
-                version2 = true;
-                Initversion2();
-            }
-            if (gameclear && version2 && version3 == false) {
-                version3 = true;
-                Initversion3();
-            }
+     
         }
     }
 }
@@ -821,8 +801,7 @@ GLvoid ObjectTimer(int value) {
     }
 }
 
-int timer1 = 90;
-bool object2_Height = true;
+bool object2_Height = true;  //위아래 튕기기 판단 위한 함수
 
 GLvoid TimerFunction(int value) {
     if (net.getStart()) {
@@ -886,7 +865,6 @@ GLvoid TimerFunction(int value) {
 
 
 
-
         // 몬스터 이동 
         M_pointz -= 0.3f;
         if (M_boolt) {  //다리 회전 
@@ -923,79 +901,19 @@ GLvoid TimerFunction(int value) {
             }
         }
 
-        if (leftWire || rightWire) {
-            if (!map2) {
-                if (leftWire) {
-                    pointx -= mainwirespeed;
-                    pointz -= subwirespeed;
-                    if (pointx <= -2.75) {
-                        pointx = -2.25;
-                        setam = 180.0f;
-                        setaLefthand = 60.0f;
-                        leftWire = false;
-                        boolgravity = false;
-                    }
-                }
-                if (rightWire) {
-                    pointx += mainwirespeed;
-                    pointz -= subwirespeed;
-                    if (pointx >= 2.75) {
-                        pointx = 2.25;
-                        setam = 180.0f;
-                        setaRighthand = 60.0f;
-                        rightWire = false;
-                        boolgravity = false;
-                    }
-                }
-            }
-            else {
-                if (leftWire) {
-                    pointx += subwirespeed;
-                    pointz -= mainwirespeed;
-                    if (pointz <= -11.5 * 6 - 10.75) {
-                        pointz = -11.5 * 6 - 10.25;
-                        setam = 90.0f;
-                        setaLefthand = 60.0f;
-                        leftWire = false;
-                        boolgravity = false;
-                    }
-                }
-                if (rightWire) {
-                    pointx += subwirespeed;
-                    pointz += mainwirespeed;
-                    if (pointz >= -11.5 * 6 - 5.25) {
-                        pointz = -11.5 * 6 - 5.75;
-                        setam = 90.0f;
-                        setaRighthand = 60.0f;
-                        rightWire = false;
-                        boolgravity = false;
-                    }
-                }
-            }
-        }
+
 
         if (boolw) { //전진
-
             //pointz -= 0.07f;       //노트북 0.007
-
             pointz -= 0.2;
-            // if (pointz < -11.5 * 6 - 5.5f) {
-              //   pointz = -11.5 * 6 - 5.75f;
-                 //boolw = false;
-                // boold = true;
-               //  setam = 90.0f;
-                // map2 = true;   //이건 ㄱ자로 꺾일때
-             //}
-           //  boolw = false;
+            
         }
         else if (boolw2) {
             pointz -= 0.1;
         }
 
-        if (leftWire || rightWire) {
-            setat = 60.0f;
-        }
-        else if (boola || boolw || boold) {
+   
+        else if (boola || boolw || boold) {  //팔회전 
             if (boolt) {
                 setat += setatspeed;
                 if (setat >= 60.0f) {
@@ -1012,17 +930,15 @@ GLvoid TimerFunction(int value) {
             }
         }
 
-        if (boolgravity) {
-            //transj -= 2.03;  //중력 없앰 
-        }
-        if (gameover == false && transj < -5) {      // 의범 추가한 죽음 소리 
+    
+        if (gameover == false && transj < -5) {      // 아래로 떨어졌을 때,사망 사운드
             //glEnd();
             sound5();
             gameover = true;
         }
 
 
-        gravityNaruto();
+     
         glutTimerFunc(1, TimerFunction, value); // 타이머함수 재 설정
     }
 }
@@ -1062,7 +978,6 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
             pointx -= 0.2;        //코딩용
             if (pointx <= -5.5) {
                 pointx = -5.5;
-
             }
             break;
         case 'd':
@@ -1081,8 +996,6 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
                 pointx = 5.5;
             }
             break;
-
-
         case 'I':
         case 'i':
             boolw = false;
@@ -1091,27 +1004,14 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
         case 'j':
         case 'J':
             sound3();
-            if (!leftWire && !rightWire && !boolj2) {
+            if ( !boolj2) {
                 if (transj >= 0.0) {
                     boolj = true;
                     boolj2 = true;
                 }
             }
             break;
-        case 'E':
-        case 'e':
-            sound4();
-            rightWire = true;
-            leftWire = false;
-            spiderNaruto();
-            break;
-        case 'Q':
-        case 'q':
-            sound4();
-            leftWire = true;
-            rightWire = false;
-            spiderNaruto();
-            break;
+
         case 'P':
         case 'p':
             glutLeaveMainLoop();
@@ -1150,97 +1050,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
     }
 }
 
-void Initversion2() {
-    //명령 관련
-    gameover = false;
-    bool boolt = false;
 
-    float setac = 0.0f;   //카메라 공전
-    float setay = 0.0f;      //카메라 자전
-    float transz = 0.0f;       //카메라 축이동
-
-
-    //명령 관련
-    boolw = false;
-    boola = false;
-    boolgravity = false;
-    boold = false;
-    boolj = false;
-    boolj2 = false;
-    gameclear = false;
-    sound_6 = true;
-    //주인공이동(x,y,z순)
-    transj = 0.0f;
-    pointx = 2.25f;
-    pointz = 0.0f;
-
-    narutoCoord[0] = glm::vec3(2.25f, 0.0f, 0.0f);
-    for (int i = 0; i < 2; i++) {
-        wireCoord[i] = glm::vec3(0.0f, 0.0f, 0.0f);
-    }
-
-    setat = 0.0f;      //이동시 다리가 움직이는 애니메이션을 하기위한 각도
-    setam = 180.0f;      //몸통 회전을 맡음
-    setaRighthand = 60.0f;
-    setaLefthand = 60.0f;
-
-    map2 = false;
-
-    leftWire = false;      //왼쪽 와이어가 발사되었는지 확인
-    rightWire = false;     //우측 와이어가 발사되었는지 확인
-
-    speed += 0.05f;
-    jumpspeedup += 0.1;
-    jumpspeeddown += 0.01;
-    mainwirespeed += 0.07;
-    subwirespeed += 0.035;
-    setatspeed += 1.5;
-}
-
-void Initversion3() {
-    //명령 관련
-    gameover = false;
-    bool boolt = false;
-
-    float setac = 0.0f;   //카메라 공전
-    float setay = 0.0f;      //카메라 자전
-    float transz = 0.0f;       //카메라 축이동
-
-
-    //명령 관련
-    boolw = false;
-    boola = false;
-    boolgravity = false;
-    boold = false;
-    boolj = false;
-    boolj2 = false;
-    gameclear = false;
-    sound_6 = true;
-    //주인공이동(x,y,z순)
-    transj = 0.0f;
-    pointx = 2.25f;
-    pointz = 0.0f;
-
-    narutoCoord[0] = glm::vec3(2.25f, 0.0f, 0.0f);
-    for (int i = 0; i < 2; i++) {
-        wireCoord[i] = glm::vec3(0.0f, 0.0f, 0.0f);
-    }
-
-    setat = 0.0f;      //이동시 다리가 움직이는 애니메이션을 하기위한 각도
-    setam = 180.0f;      //몸통 회전을 맡음
-    setaRighthand = 60.0f;
-    setaLefthand = 60.0f;
-
-    map2 = false;
-
-    leftWire = false;      //왼쪽 와이어가 발사되었는지 확인
-    rightWire = false;     //우측 와이어가 발사되었는지 확인
-
- 
-
-    nangansize = 7.0f;
-
-}
 
 void restart() {
     gameover = false;
@@ -1266,9 +1076,7 @@ void restart() {
     pointz = 0.0f;
 
     narutoCoord[0] = glm::vec3(2.25f, 0.0f, 0.0f);
-    for (int i = 0; i < 2; i++) {
-        wireCoord[i] = glm::vec3(0.0f, 0.0f, 0.0f);
-    }
+
 
     setat = 0.0f;      //이동시 다리가 움직이는 애니메이션을 하기위한 각도
     setam = 180.0f;      //몸통 회전을 맡음
@@ -1278,8 +1086,7 @@ void restart() {
     map2 = false;
     version2 = false;
     version3 = false;
-    leftWire = false;      //왼쪽 와이어가 발사되었는지 확인
-    rightWire = false;     //우측 와이어가 발사되었는지 확인
+
 
     speed = 0.17;
     jumpspeedup = 0.5;

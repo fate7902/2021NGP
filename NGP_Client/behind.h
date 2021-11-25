@@ -18,9 +18,6 @@
 //불도저
 
 
-
-
-
 float B_pointx = 2.25f;
 float B_pointz = 0.0f;
 
@@ -30,8 +27,6 @@ float B_setat = 0.0f;      //이동시 다리가 움직이는 애니메이션을 하기위한 각도
 float B_setam = 180.0f;      //몸통 회전을 맡음
 float B_setaRighthand = 60.0f;
 float B_setaLefthand = 60.0f;
-
-
 
 
 

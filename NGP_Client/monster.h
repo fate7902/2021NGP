@@ -34,7 +34,6 @@ float M_setam = 180.0f;      //몸통 회전을 맡음
 float M_setaRighthand = 60.0f;
 float M_setaLefthand = 60.0f;
 
-//bool map2 = false;
 
 
 
@@ -260,10 +259,7 @@ void drawMonster(GLuint program, int vertexCount, GLuint vao[], GLuint vbo[], gl
     basicChange = glm::translate(basicChange, glm::vec3(0.0f, -0.25f, 0.0));      //회전축 이동
     transformMatrix = basicChange * transformMatrix;
     rotateMatrixt = glm::mat4(1.0f);
-    if (leftWire || rightWire)
-       rotateMatrixt = glm::rotate(rotateMatrixt, glm::radians(-M_setat), glm::vec3(1.0f, 0.0f, 0.0f));
-    else
-        rotateMatrixt = glm::rotate(rotateMatrixt, glm::radians(M_setat), glm::vec3(1.0f, 0.0f, 0.0f));
+     rotateMatrixt = glm::rotate(rotateMatrixt, glm::radians(M_setat), glm::vec3(1.0f, 0.0f, 0.0f));
 
     transformMatrix = rotateMatrixt * transformMatrix;
     basicChange = glm::mat4(1.0f);
@@ -284,23 +280,6 @@ void drawMonster(GLuint program, int vertexCount, GLuint vao[], GLuint vbo[], gl
     glDrawElements(GL_TRIANGLES, vertexCount * 3, GL_UNSIGNED_INT, 0);
 
 
-  /* //와이어
-    if (leftWire || rightWire) {
-        transformMatrix = glm::mat4(1.0f);
-
-        objColor = glm::vec3(0.0f, 0.0f, 0.0f);
-
-        transformLocation = glGetUniformLocation(program, "transform");
-        glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-        objcolorLocation = glGetUniformLocation(program, "objectColor");
-        glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
-        glBindVertexArray(vao[2]);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(wireCoord), wireCoord, GL_DYNAMIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glDrawArrays(GL_LINES, 0, 2);
-
-    }*/
 }
 
 
