@@ -12,7 +12,11 @@
 using namespace std;
 
 #define MAXTIME 100
-#define INFINITE 9999
+#define INFINITE -9999
+#define MOVEDELAY 1000
+#define INITPOSX 0
+#define INITPOSY 0
+#define INITPOSZ 0
 
 //queue<CLIENT_DATA*> recvQueue;
 //mutex recvLock;
@@ -26,8 +30,9 @@ float dx = 0.2;
 //short dy = 1;
 float dz = 0.2;
 
-default_random_engine dre;
-uniform_int_distribution<> uid(BALL, BULLDOZER);
+default_random_engine dre{ random_device{}() };
+uniform_int_distribution<> uid{BALL, BULLDOZER};
+uniform_int_distribution<int> IntUid{ 1, 3 };
 
 int recvn(SOCKET s, char* buf, int len, int flags) {
 	int received;
@@ -92,13 +97,21 @@ void SC_LOGIN(int id)
 }
 
 /* 의범 -  Goal_Check()와 Coll_check() 작성하기 */
-bool Goal_Check()
+bool GOAL_CHECK()
 {
 	return false;
 }
 
-bool Coll_check()
+bool COLL_CHECK()
 {
+	return false;
+}
+
+bool RESET_OBJECT(OBJECT_INFO object)
+{
+	if (objectInfo[1].z > object.z && true == object.moving) {
+		return true;
+	}
 	return false;
 }
 
@@ -133,7 +146,7 @@ void SC_SEND(CLIENT_DATA clientData)
 		send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 	
 	// 위에 이동시킨 유저 결승점 통과여부 판단
-	if (true == Goal_Check()) {
+	if (true == GOAL_CHECK()) {
 		server_data.dataType = GAME_RESULT;
 		server_data.mission_result = true;
 		clientInfo[id].alive = false;
@@ -141,7 +154,7 @@ void SC_SEND(CLIENT_DATA clientData)
 	}
 	
 	// 위에 이동시킨 유저 충돌여부 판단
-	if (true == Coll_check()) {
+	if (true == COLL_CHECK()) {
 		server_data.dataType = GAME_RESULT;
 		server_data.mission_result = false;
 		/* 
@@ -217,6 +230,9 @@ DWORD WINAPI S_RECV_PACKET(LPVOID arg)
 
 DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 {
+	auto start = INFINITE;
+	auto end = INFINITE;
+	int line = 0;
 	SERVER_DATA server_data;
 	server_data.dataType = LOCATION;
 	server_data.subDataType = OBJECT;
@@ -235,43 +251,87 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 					objects.objectType = TRACKER;
 					objects.z += 0.2;
 					break;
-				case 2:
-					if (objects.objectType == NULL)
-						objects.objectType = uid(dre);
-					else
-						objects.z -= 0.2;
-					
+				default:
+					if (objects.objectType == NULL) {
+						if (2 == objects.id || 3 == objects.id) {
+							if (2 == objects.id) {
+								start = clock();
+								line = IntUid(dre);
+							}
+							switch (line)
+							{
+							case 1:
+								objects.line = objects.id;
+								break;
+							case 2:
+								if (2 == objects.id)
+									objects.line = 1;
+								else
+									objects.line = objects.id;
+								break;
+							case 3:
+								objects.line = objects.id - 1;
+								break;
+							}
+							objects.objectType = uid(dre);
+							objects.moving = true;
+						}
+						else {
+							if (4 == objects.id && false == objects.moving) {
+								end = clock();
+								if (end - start >= MOVEDELAY) {
+									line = IntUid(dre);
+								}
+							}
+							if (0 != line) {
+								switch (line)
+								{
+								case 1:
+									objects.line = objects.id - 2;
+									break;
+								case 2:
+									if (4 == objects.id)
+										objects.line = 1;
+									else
+										objects.line = 3;
+									break;
+								case 3:
+									objects.line = objects.id - 3;
+									break;
+								}
+								objects.objectType = uid(dre);
+								objects.moving = true;
+							}
+						}
+					}
+					else {
+						if (true == objects.moving)
+							objects.z -= 0.2;
+					}
 					break;
-				/*case 3:
-					if (objects.objectType == NULL)
-						objects.objectType = uid(dre);
-					break;
-				case 4:
-					if (objects.objectType == NULL)
-						objects.objectType = uid(dre);
-					break;
-				case 5:
-					if (objects.objectType == NULL)
-						objects.objectType = uid(dre);
-					break;*/
 				}
-				//objects.x += odx;
-				//objects.y += ody;
-				//objects.z += odz;
-				server_data.id = objects.id;
-				server_data.objectType = objects.objectType;
-				server_data.x = objects.x;
-				server_data.y = objects.y;
-				server_data.z = objects.z;
-
-				if (objectInfo[1].z > objectInfo[2].z) {
-					objectInfo[2].objectType = NULL;
-					objectInfo[2].z = objectInfo[0].z + 10;
-				}
+				server_data.objectInfo = objects;
 
 				for (const auto& clients : clientInfo)
 					send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 
+				if (true == COLL_CHECK()) {
+					/* 위에 이동한 오브젝트와 유저의 충돌 검사 후 충돌 시 데이터 전송 파트 */
+				}
+
+				if (true == RESET_OBJECT(objects)) {
+					objects.moving = false;
+					objects.objectType = NULL;
+					objects.x = INITPOSX;
+					objects.y = INITPOSY;
+					objects.z = INITPOSZ;
+					SERVER_DATA reset_server_data;
+					reset_server_data.dataType = LOCATION;
+					reset_server_data.subDataType = OBJECT;
+					reset_server_data.objectInfo = objects;					
+					for (const auto& clients : clientInfo)
+						send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+				}
 			}
 		}
 	}

@@ -27,23 +27,12 @@ constexpr unsigned char SELF		=	0x31;
 constexpr unsigned char OTHER		=	0x32;
 
 // OBJECT DATA TYPE
-constexpr unsigned char BOSS = 0x41;
-constexpr unsigned char TRACKER = 0x42;
-constexpr unsigned char BALL = 0x43;
-constexpr unsigned char BULLDOZER = 0x44;
+constexpr unsigned char BOSS		=	0x41;
+constexpr unsigned char TRACKER		=	0x42;
+constexpr unsigned char BALL		=	0x43;
+constexpr unsigned char BULLDOZER	=	0x44;
 
 #pragma pack(push,1)
-// DATA 형식
-struct SERVER_DATA {
-	unsigned char dataType;
-	unsigned char subDataType;
-	unsigned char objectType;
-	unsigned short id;
-	bool mission_result;
-	float x, y, z;
-	int time;
-};
-
 // CLIENT가 보내는 DATA 형식
 struct CLIENT_DATA {
 	unsigned char type;
@@ -60,7 +49,20 @@ struct CLIENT_INFO {
 
 struct OBJECT_INFO {
 	unsigned char objectType;
+	bool moving;
+	unsigned short line;
 	unsigned short id;
 	float x, y, z;
+};
+
+// DATA 형식
+struct SERVER_DATA {
+	unsigned char dataType;
+	unsigned char subDataType;
+	OBJECT_INFO objectInfo;
+	unsigned short id;
+	bool mission_result;
+	float x, y, z;
+	int time;
 };
 #pragma pack(pop)

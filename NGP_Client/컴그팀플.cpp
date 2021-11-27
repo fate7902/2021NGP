@@ -285,13 +285,23 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
             }
         }
 
-        MonsterCoord = glm::vec3(net.objects[0].x, net.objects[0].y, net.objects[0].z);        //괴물 위치
-        BehindCoord = glm::vec3(net.objects[1].x, net.objects[1].y, net.objects[1].z);
-        if (net.objects[2].objectType == BULLDOZER)
-            Object1Coord = glm::vec3(net.objects[2].x, net.objects[2].y, net.objects[2].z);
-        else
-            Object2Coord = glm::vec3(net.objects[2].x, net.objects[2].y, net.objects[2].z);
-
+        for (const auto& object : net.objects) {
+            switch (object.objectType)
+            {
+            case BOSS:
+                MonsterCoord = glm::vec3(object.x, object.y, object.z);
+                break;
+            case TRACKER:
+                BehindCoord = glm::vec3(object.x, object.y, object.z);
+                break;
+            case BALL:
+                Object2Coord = glm::vec3(object.x, object.y, object.z);
+                break;
+            case BULLDOZER:
+                Object1Coord = glm::vec3(object.x, object.y, object.z);
+                break;
+            }
+        }
     
         scalehandfoot = glm::scale(basicChange, glm::vec3(0.1f, 0.5f, 0.1f));         //손과발의 크기 축소(기본행렬)
         rotateMatrixm = glm::rotate(rotateMatrixm, glm::radians(setam), glm::vec3(0.0f, 1.0f, 0.0f));      //몸통 회전
@@ -329,12 +339,23 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
             }
         }
 
-        drawMonster(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
-        if ( net.objects[2].objectType == BULLDOZER)
-            drawObject1(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
-        else
-            drawObject2(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
-        drawBehind(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+        for (const auto& object : net.objects) {
+            switch (object.objectType)
+            {
+            case BOSS:
+                drawMonster(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+                break;
+            case TRACKER:
+                drawBehind(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+                break;
+            case BALL:
+                drawObject2(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+                break;
+            case BULLDOZER:
+                drawObject1(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+                break;
+            }
+        }
 
         //건물그리기
         drawMap(s_program[2], vertexCount, vao, viewMatrix, projectionMatrix);
