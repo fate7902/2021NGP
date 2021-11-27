@@ -5,9 +5,16 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 	switch (server_data.dataType)
 	{
 	case LOCATION: // 플레이어 위치값
-		clients[server_data.id].x = server_data.x;
-		clients[server_data.id].y = server_data.y;
-		clients[server_data.id].z = server_data.z;
+		switch (server_data.subDataType)
+		{
+		case PLAYER:
+			clients[server_data.id].x = server_data.x;
+			clients[server_data.id].y = server_data.y;
+			clients[server_data.id].z = server_data.z;
+			break;
+		case OBJECT:
+			break;
+		}
 		break;
 	case LOGIN: // 플레이어 접속
 		switch (server_data.subDataType) {

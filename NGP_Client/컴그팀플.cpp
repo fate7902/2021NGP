@@ -945,108 +945,109 @@ GLvoid TimerFunction(int value) {
 
 GLvoid Keyboard(unsigned char key, int x, int y) {
     if (net.getStart()) {
-        //net.CS_MOVE(key);
-        switch (key) {
-        case 'W':
-        case 'w':
-            setam = 180.0f;
-            boolw = true;
-            boola = false;
-            boold = false;
-           // pointz -= 0.5;
-            break;
-        case 'S':
-        case 's':
-            setam = -180.0f;
-            boolw = false;
-            boolw2 = false;
-            boola = false;
-            boold = false;
+        net.CS_MOVE(key);
 
-            break;
-        case 'A':
-        case 'a':
-            if(boolw == true || boolw2 == true)
-                setam = -135.0f;
-            else 
-                setam = -90.0f;
-        //    boolw = false;
-            boola = true;
-            boold = false;
-            boolw = false;
-            boolw2 = true;
-            pointx -= 0.2;        //코딩용
-            if (pointx <= -5.5) {
-                pointx = -5.5;
-            }
-            break;
-        case 'd':
-        case 'D':
-            if (boolw == true || boolw2 == true)
-                setam = 135.0f;
-            else
-                setam = 90.0f;
-       //     boolw = false;
-            boola = false;
-            boold = true;
-            boolw = false;
-            boolw2 = true;
-            pointx += 0.2;        //코딩용
-            if (pointx >= 5.5) {
-                pointx = 5.5;
-            }
-            break;
-        case 'I':
-        case 'i':
-            boolw = false;
-            boold = false;
-            break;
-        case 'j':
-        case 'J':
-            sound3();
-            if ( !boolj2) {
-                if (transj >= 0.0) {
-                    boolj = true;
-                    boolj2 = true;
-                }
-            }
-            break;
+    //    switch (key) {
+    //    case 'W':
+    //    case 'w':
+    //        setam = 180.0f;
+    //        boolw = true;
+    //        boola = false;
+    //        boold = false;
+    //       // pointz -= 0.5;
+    //        break;
+    //    case 'S':
+    //    case 's':
+    //        setam = -180.0f;
+    //        boolw = false;
+    //        boolw2 = false;
+    //        boola = false;
+    //        boold = false;
 
-        case 'P':
-        case 'p':
-            glutLeaveMainLoop();
-            break;
-        case 27:    /* Esc - Quits the program. */
-            printf("done.\n");
-            exit(1);
-            break;
+    //        break;
+    //    case 'A':
+    //    case 'a':
+    //        if(boolw == true || boolw2 == true)
+    //            setam = -135.0f;
+    //        else 
+    //            setam = -90.0f;
+    //    //    boolw = false;
+    //        boola = true;
+    //        boold = false;
+    //        boolw = false;
+    //        boolw2 = true;
+    //        pointx -= 0.2;        //코딩용
+    //        if (pointx <= -5.5) {
+    //            pointx = -5.5;
+    //        }
+    //        break;
+    //    case 'd':
+    //    case 'D':
+    //        if (boolw == true || boolw2 == true)
+    //            setam = 135.0f;
+    //        else
+    //            setam = 90.0f;
+    //   //     boolw = false;
+    //        boola = false;
+    //        boold = true;
+    //        boolw = false;
+    //        boolw2 = true;
+    //        pointx += 0.2;        //코딩용
+    //        if (pointx >= 5.5) {
+    //            pointx = 5.5;
+    //        }
+    //        break;
+    //    case 'I':
+    //    case 'i':
+    //        boolw = false;
+    //        boold = false;
+    //        break;
+    //    case 'j':
+    //    case 'J':
+    //        sound3();
+    //        if ( !boolj2) {
+    //            if (transj >= 0.0) {
+    //                boolj = true;
+    //                boolj2 = true;
+    //            }
+    //        }
+    //        break;
 
-        case ' ':    /* Space - toggles mode.     */
-            mode = (mode == MODE_BITMAP) ? MODE_STROKE : MODE_BITMAP;
-            font_index = 0;
-            glutPostRedisplay();
-            break;
+    //    case 'P':
+    //    case 'p':
+    //        glutLeaveMainLoop();
+    //        break;
+    //    case 27:    /* Esc - Quits the program. */
+    //        printf("done.\n");
+    //        exit(1);
+    //        break;
 
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-            if (mode == MODE_BITMAP || key == '1' || key == '2') {
-                font_index = key - '1';
-            }
-            glutPostRedisplay();
-            break;
-        }
-        glutPostRedisplay(); //--- 배경색이 바뀔때마다 출력 콜백함수를 호출하여 화면을 refresh 한다
-    }
-    else {
-        if (key == 'r' || key == 'R') {
-            if (gameover)
-                restart();
-        }
+    //    case ' ':    /* Space - toggles mode.     */
+    //        mode = (mode == MODE_BITMAP) ? MODE_STROKE : MODE_BITMAP;
+    //        font_index = 0;
+    //        glutPostRedisplay();
+    //        break;
+
+    //    case '1':
+    //    case '2':
+    //    case '3':
+    //    case '4':
+    //    case '5':
+    //    case '6':
+    //    case '7':
+    //        if (mode == MODE_BITMAP || key == '1' || key == '2') {
+    //            font_index = key - '1';
+    //        }
+    //        glutPostRedisplay();
+    //        break;
+    //    }
+    //    glutPostRedisplay(); //--- 배경색이 바뀔때마다 출력 콜백함수를 호출하여 화면을 refresh 한다
+    //}
+    //else {
+    //    if (key == 'r' || key == 'R') {
+    //        if (gameover)
+    //            restart();
+    //    }
     }
 }
 

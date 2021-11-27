@@ -18,9 +18,9 @@ using namespace std;
 CLIENT_INFO clientInfo[3];
 bool gameStart = false;
 /* 의범 - 이동시 이동 크기 설정하기(변수 타입 변경 가능) */
-short dx = 1;
-short dy = 1;
-short dz = 1;
+short dx = 0.2;
+//short dy = 1;
+short dz = 0.2;
 
 int recvn(SOCKET s, char* buf, int len, int flags) {
 	int received;
@@ -103,42 +103,21 @@ void SC_SEND(CLIENT_DATA clientData)
 	server_data.dataType = PLAYER;
 	switch (clientData.type) {
 	case MOVE_FRONT:
-		/* 의범 - 전진시 변하는 부분만 +dx 식으로 하고 나머지는 기존 값으로 셋팅하기*/
-		clientInfo[id].x += dx;
-		clientInfo[id].y += dy;
 		clientInfo[id].z += dz;
-		server_data.x = clientInfo[id].x;
-		server_data.y = clientInfo[id].y;
-		server_data.z = clientInfo[id].z;
 		break;
 	case MOVE_BACK:
-		/* 의범 - 후진시 변하는 부분만 +dx 식으로 하고 나머지는 기존 값으로 셋팅하기*/
-		clientInfo[id].x += dx;
-		clientInfo[id].y += dy;
-		clientInfo[id].z += dz;
-		server_data.x = clientInfo[id].x;
-		server_data.y = clientInfo[id].y;
-		server_data.z = clientInfo[id].z;
+		clientInfo[id].z -= dz;
 		break;
 	case MOVE_RIGHT:
-		/* 의범 - 우측이동시 변하는 부분만 +dx 식으로 하고 나머지는 기존 값으로 셋팅하기*/
 		clientInfo[id].x += dx;
-		clientInfo[id].y += dy;
-		clientInfo[id].z += dz;
-		server_data.x = clientInfo[id].x;
-		server_data.y = clientInfo[id].y;
-		server_data.z = clientInfo[id].z;
 		break;
 	case MOVE_LEFT:
-		/* 의범 - 좌측이동시 변하는 부분만 +dx 식으로 하고 나머지는 기존 값으로 셋팅하기*/
-		clientInfo[id].x += dx;
-		clientInfo[id].y += dy;
-		clientInfo[id].z += dz;
-		server_data.x = clientInfo[id].x;
-		server_data.y = clientInfo[id].y;
-		server_data.z = clientInfo[id].z;
+		clientInfo[id].x -= dx;
 		break;
 	}
+	server_data.x = clientInfo[id].x;
+	server_data.y = clientInfo[id].y;
+	server_data.z = clientInfo[id].z;
 	server_data.id = id;
 
 	for (const auto& clients : clientInfo)
