@@ -61,8 +61,21 @@ void SC_LOGIN(int id)
 	for (const auto& clients : clientInfo) {
 		if (true == clients.alive) {
 			// 본인에게 전달
-			if (id == clients.id)
-				server_data.subDataType = SELF;				
+			if (id == clients.id) {
+				server_data.subDataType = SELF;
+				for (const auto& other : clientInfo) {
+					if (clients.id > other.id) {
+						SERVER_DATA other_server_data;
+						other_server_data.dataType = LOGIN;
+						other_server_data.subDataType = OTHER;
+						other_server_data.id = clientInfo[other.id].id;
+						other_server_data.x = clientInfo[other.id].x;
+						other_server_data.y = clientInfo[other.id].y;
+						other_server_data.z = clientInfo[other.id].z;
+						send(clients.sock, (char*)&other_server_data, sizeof(SERVER_DATA), 0);
+					}
+				}
+			}
 			// 다른 유저에게 전달
 			else
 				server_data.subDataType = OTHER;
