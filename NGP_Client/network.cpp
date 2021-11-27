@@ -13,6 +13,12 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 			clients[server_data.id].z = server_data.z;
 			break;
 		case OBJECT:
+			objects[server_data.id].id = server_data.id;
+			objects[server_data.id].objectType = server_data.objectType;
+			objects[server_data.id].x = server_data.x;
+			objects[server_data.id].y = server_data.y;
+			objects[server_data.id].z = server_data.z;
+
 			break;
 		}
 		break;
@@ -52,7 +58,9 @@ DWORD WINAPI C_SAVE_PACKET(LPVOID arg)
 	Network* network = (Network*)arg;
 	SOCKET sock = network->getSock();
 	while (true) {
-		recv(sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+		int ret = recv(sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+		if (ret == SOCKET_ERROR)
+			cout << "Recv ERROR!" << endl;
 
 		network->C_UPDATE(server_data);
 	}

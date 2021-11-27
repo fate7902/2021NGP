@@ -18,6 +18,8 @@ class Network {
 	SOCKET m_sock;
 public:
 	CLIENT_INFO clients[3];
+	OBJECT_INFO objects[6];
+
 	void C_UPDATE(SERVER_DATA server_data);
 	void network();
 	void CS_MOVE(char key);

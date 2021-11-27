@@ -26,14 +26,21 @@ constexpr unsigned char OBJECT		=	0x22;
 constexpr unsigned char SELF		=	0x31;
 constexpr unsigned char OTHER		=	0x32;
 
+// OBJECT DATA TYPE
+constexpr unsigned char BOSS = 0x41;
+constexpr unsigned char TRACKER = 0x42;
+constexpr unsigned char BALL = 0x43;
+constexpr unsigned char BULLDOZER = 0x44;
+
 #pragma pack(push,1)
 // DATA Çü½Ä
 struct SERVER_DATA {
 	unsigned char dataType;
 	unsigned char subDataType;
+	unsigned char objectType;
 	unsigned short id;
 	bool mission_result;
-	int x, y, z;
+	float x, y, z;
 	int time;
 };
 
@@ -48,6 +55,12 @@ struct CLIENT_INFO {
 	SOCKET sock;
 	unsigned short id;
 	bool alive;
-	int x, y, z;
+	float x, y, z;
+};
+
+struct OBJECT_INFO {
+	unsigned char objectType;
+	unsigned short id;
+	float x, y, z;
 };
 #pragma pack(pop)

@@ -170,13 +170,22 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     InitShader();
     InitTexture();
 
+
+    net.objects[0].z = 0;
+    net.objects[1].z = 0;
+    net.objects[2].z = -20;
+
+    /*net.objects[0].z = -10;
+    net.objects[1].z = 10;
+    net.objects[2].z = -20;*/
+
     glutDisplayFunc(drawScene);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(Keyboard);
     glutMouseFunc(Mouse);
 
     glutTimerFunc(timer2, TimerFunction, 0);
-    glutTimerFunc(3000, ObjectTimer, 0);  //1초
+    //glutTimerFunc(3000, ObjectTimer, 0);  //1초
 
     glutMainLoop();
 
@@ -271,14 +280,17 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         
         for (const auto& client : net.clients) {
             if (client.alive) {
+                cout << client.z << endl;
                 narutoCoord[client.id] = glm::vec3(client.x, client.y , client.z);        //캐릭터의 위치
             }
         }
 
-        MonsterCoord = glm::vec3(M_pointx - 1.4, 0.0, M_pointz-20);        //괴물 위치
-        Object1Coord = glm::vec3(O1_pointx, 0.0, O1_pointz -40);
-        Object2Coord = glm::vec3(O2_pointx, O2_pointy, O2_pointz -40);
-        BehindCoord = glm::vec3(B_pointx, 0.0, B_pointz);
+        MonsterCoord = glm::vec3(net.objects[0].x, net.objects[0].y, net.objects[0].z);        //괴물 위치
+        BehindCoord = glm::vec3(net.objects[1].x, net.objects[1].y, net.objects[1].z);
+        if (net.objects[2].objectType == BULLDOZER)
+            Object1Coord = glm::vec3(net.objects[2].x, net.objects[2].y, net.objects[2].z);
+        else
+            Object2Coord = glm::vec3(net.objects[2].x, net.objects[2].y, net.objects[2].z);
 
     
         scalehandfoot = glm::scale(basicChange, glm::vec3(0.1f, 0.5f, 0.1f));         //손과발의 크기 축소(기본행렬)
@@ -318,8 +330,10 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         }
 
         drawMonster(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
-        drawObject1(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
-        drawObject2(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+        if ( net.objects[2].objectType == BULLDOZER)
+            drawObject1(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+        else
+            drawObject2(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
         drawBehind(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
 
         //건물그리기
@@ -805,64 +819,63 @@ bool object2_Height = true;  //위아래 튕기기 판단 위한 함수
 
 GLvoid TimerFunction(int value) {
     if (net.getStart()) {
-        //장애물1
-        if (set_Object1 == false) {
-            O1_pointz = M_pointz - 2.0f;
-        }
-        else
-        {
-            O1_pointz += 0.2f;
-            if (O1_pointz >= 0.0)
-            {
-                O1_pointz = M_pointz - 2.0f;
+        ////장애물1
+        //if (set_Object1 == false) {
+        //    O1_pointz = M_pointz - 2.0f;
+        //}
+        //else
+        //{
+        //    O1_pointz += 0.2f;
+        //    if (O1_pointz >= 0.0)
+        //    {
+        //        O1_pointz = M_pointz - 2.0f;
 
-                if (O1_pointx == M_pointx - 8)
-                    left_Object = false;
-                else if (O1_pointx = M_pointx - 2)
-                    mid_Object = false;
-                else if (O1_pointx = M_pointx + 4)
-                    right_Object = false;
+        //        if (O1_pointx == M_pointx - 8)
+        //            left_Object = false;
+        //        else if (O1_pointx = M_pointx - 2)
+        //            mid_Object = false;
+        //        else if (O1_pointx = M_pointx + 4)
+        //            right_Object = false;
 
-                set_Object1 = false;
-            }
-        }
+        //        set_Object1 = false;
+        //    }
+        //}
 
-        //장애물2
-        if (set_Object2 == false) {
-            O2_pointz = M_pointz - 2.0f;
-            O2_pointy = 0.0f;
-        }
-        else
-        {
-            O2_pointz += 0.2f;
-            if (object2_Height == true) {
-                O2_pointy += 0.1f;
-                if (O2_pointy >= 4.0f)
-                    object2_Height = false;
-            }
-            else {
-                O2_pointy -= 0.1f;
-                if (O2_pointy <= 0.0f)
-                    object2_Height = true;
+        ////장애물2
+        //if (set_Object2 == false) {
+        //    O2_pointz = M_pointz - 2.0f;
+        //    O2_pointy = 0.0f;
+        //}
+        //else
+        //{
+        //    O2_pointz += 0.2f;
+        //    if (object2_Height == true) {
+        //        O2_pointy += 0.1f;
+        //        if (O2_pointy >= 4.0f)
+        //            object2_Height = false;
+        //    }
+        //    else {
+        //        O2_pointy -= 0.1f;
+        //        if (O2_pointy <= 0.0f)
+        //            object2_Height = true;
 
-            }
+        //    }
 
-            if (O2_pointz >= 0.0)
-            {
-                O2_pointz = M_pointz - 2.0f;
+        //    if (O2_pointz >= 0.0)
+        //    {
+        //        O2_pointz = M_pointz - 2.0f;
 
-                if (O2_pointx == M_pointx - 4)
-                    left_Object = false;
-                else if (O2_pointx = M_pointx + 3)
-                    mid_Object = false;
-                else if (O2_pointx = M_pointx + 7)
-                    right_Object = false;
+        //        if (O2_pointx == M_pointx - 4)
+        //            left_Object = false;
+        //        else if (O2_pointx = M_pointx + 3)
+        //            mid_Object = false;
+        //        else if (O2_pointx = M_pointx + 7)
+        //            right_Object = false;
 
-                set_Object2 = false;
-            }
+        //        set_Object2 = false;
+        //    }
 
-        }
-
+        //}
 
 
         // 몬스터 이동 

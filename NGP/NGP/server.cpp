@@ -5,6 +5,7 @@
 #include <WinSock2.h>
 #include <iostream>
 #include <time.h>
+#include <random>
 //#include <queue>
 //#include <mutex>
 #include "protocol.h"
@@ -16,11 +17,17 @@ using namespace std;
 //queue<CLIENT_DATA*> recvQueue;
 //mutex recvLock;
 CLIENT_INFO clientInfo[3];
+// 0: 보스 1: 따라오는 장애물 2~5: 장애물
+OBJECT_INFO objectInfo[6];
+
 bool gameStart = false;
 /* 의범 - 이동시 이동 크기 설정하기(변수 타입 변경 가능) */
-short dx = 0.2;
+float dx = 0.2;
 //short dy = 1;
-short dz = 0.2;
+float dz = 0.2;
+
+default_random_engine dre;
+uniform_int_distribution<> uid(BALL, BULLDOZER);
 
 int recvn(SOCKET s, char* buf, int len, int flags) {
 	int received;
@@ -100,13 +107,14 @@ void SC_SEND(CLIENT_DATA clientData)
 	int id = clientData.id;
 	SERVER_DATA server_data;
 	server_data.dataType = LOCATION;
-	server_data.dataType = PLAYER;
+	server_data.subDataType = PLAYER;
 	switch (clientData.type) {
 	case MOVE_FRONT:
-		clientInfo[id].z += dz;
+		clientInfo[id].z -= dz;
+		cout << clientInfo[id].x << " " << clientInfo[id].y << " " << clientInfo[id].z << "  id: " << id << endl;
 		break;
 	case MOVE_BACK:
-		clientInfo[id].z -= dz;
+		clientInfo[id].z += dz;
 		break;
 	case MOVE_RIGHT:
 		clientInfo[id].x += dx;
@@ -115,6 +123,7 @@ void SC_SEND(CLIENT_DATA clientData)
 		clientInfo[id].x -= dx;
 		break;
 	}
+
 	server_data.x = clientInfo[id].x;
 	server_data.y = clientInfo[id].y;
 	server_data.z = clientInfo[id].z;
@@ -193,7 +202,7 @@ DWORD WINAPI S_RECV_PACKET(LPVOID arg)
 		retval = recvn(client_sock, (char*)&clientData, sizeof(CLIENT_DATA), 0);
 		if (SOCKET_ERROR == retval)
 			break;
-
+		
 		// 큐 사용시
 		//recvLock.lock();
 		//recvQueue.emplace(clientData);
@@ -211,21 +220,60 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 	SERVER_DATA server_data;
 	server_data.dataType = LOCATION;
 	server_data.subDataType = OBJECT;
+
 	while (true) {
-		//if (true == gameStart) {
-		//	/* 의범 - 오브젝트 자료구조 만든 뒤 각 프레임당 변동값 셋팅 후 적절히 변경하여 사용 */
-		//	for (const auto& objects : objectInfo) {
-		//		objects.x += odx;
-		//		objects.y += ody;
-		//		objects.z += odz;
-		//		server_data.id = objects.id;
-		//		server_data.x = objects.x;
-		//		server_data.y = objects.y;
-		//		server_data.z = objects.z;
-		//		for (const auto& clients : clientInfo)
-		//			send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-		//	}
-		//}
+		if (true == gameStart) {
+			/* 의범 - 오브젝트 자료구조 만든 뒤 각 프레임당 변동값 셋팅 후 적절히 변경하여 사용 */
+			// -6.25, 0 , 6.25
+			for (auto& objects : objectInfo) {
+				switch (objects.id) {
+				case 0:	// BOSS
+					objects.objectType = BOSS;
+					objects.z += 0.2;
+					break;
+				case 1:	// TRACKER
+					objects.objectType = TRACKER;
+					objects.z += 0.2;
+					break;
+				case 2:
+					if (objects.objectType == NULL)
+						objects.objectType = uid(dre);
+					else
+						objects.z -= 0.2;
+					
+					break;
+				/*case 3:
+					if (objects.objectType == NULL)
+						objects.objectType = uid(dre);
+					break;
+				case 4:
+					if (objects.objectType == NULL)
+						objects.objectType = uid(dre);
+					break;
+				case 5:
+					if (objects.objectType == NULL)
+						objects.objectType = uid(dre);
+					break;*/
+				}
+				//objects.x += odx;
+				//objects.y += ody;
+				//objects.z += odz;
+				server_data.id = objects.id;
+				server_data.objectType = objects.objectType;
+				server_data.x = objects.x;
+				server_data.y = objects.y;
+				server_data.z = objects.z;
+
+				if (objectInfo[1].z > objectInfo[2].z) {
+					objectInfo[2].objectType = NULL;
+					objectInfo[2].z = objectInfo[0].z + 10;
+				}
+
+				for (const auto& clients : clientInfo)
+					send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+
+			}
+		}
 	}
 }
 
@@ -292,8 +340,23 @@ int main(int argc, char* argv[]) {
 			SC_LOGIN(userCount++);
 
 			// 3명의 유저가 접속하면 게임 시작
-			if (clientInfo[0].alive && clientInfo[1].alive && clientInfo[2].alive)
+			if (clientInfo[0].alive && clientInfo[1].alive && clientInfo[2].alive) {
+				objectInfo[0].x = 0;
+				objectInfo[0].y = 0;
+				objectInfo[0].z = 10;
+
+				objectInfo[1].x = 0;
+				objectInfo[1].y = 0;
+				objectInfo[1].z = -10;			// BOSS와 20차이가 나야 한다.
+
+				for (int i = 2; i < 6; ++i) {
+					objectInfo[i].x = 0;
+					objectInfo[i].y = 0;
+					objectInfo[i].z = 20;
+				}
+
 				SC_GAMESTART();
+			}
 		}
 		// 3명 접속 후 게임 시작
 		else {
