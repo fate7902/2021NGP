@@ -516,7 +516,7 @@ void make_fragmentShader()
     glShaderSource(fragmentshader, 1, (const GLchar**)&fragmentsource, 0);
     //--- 프래그먼트 세이더 컴파일
     glCompileShader(fragmentshader);
-    //--- 컴파일이 제대로 되지 않은 경우: 컴파일 에러 체크
+    //--- 컴파일이 제대로 되지 않은 경우: 컴파일make_fragmentShader 에러 체크
     GLint result;
     GLchar errorLog[512];
     glGetShaderiv(fragmentshader, GL_COMPILE_STATUS, &result);
