@@ -17,6 +17,9 @@ using namespace std;
 #define INITPOSX 0
 #define INITPOSY 0
 #define INITPOSZ 0
+#define USERSIZE 0.5
+#define OBJECTSIZE 0.5
+#define GOALPOSZ -1000
 
 //queue<CLIENT_DATA*> recvQueue;
 //mutex recvLock;
@@ -97,14 +100,65 @@ void SC_LOGIN(int id)
 }
 
 /* 의범 -  Goal_Check()와 Coll_check() 작성하기 */
-bool GOAL_CHECK()
+bool GOAL_CHECK(CLIENT_INFO clientInfo)
 {
+	if (clientInfo.z <= GOALPOSZ) {
+		SERVER_DATA server_data;
+		server_data.dataType = GAME_RESULT;
+		server_data.mission_result = true;		
+		send(clientInfo.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+		/* 도착한 유저 정보 바꾸기 - 서버에서 */
+
+		/* 남은시간 10초로 바꾸기 - 서버에서 */
+	}
 	return false;
 }
 
-bool COLL_CHECK()
+void COLL_CHECK(CLIENT_INFO clientInfo)
 {
-	return false;
+	float client_minX = clientInfo.x - USERSIZE;
+	float client_minY = clientInfo.y - USERSIZE;
+	float client_minZ = clientInfo.z + USERSIZE;
+	for (const auto& objects : objectInfo) {
+		float objects_minX = objects.x - OBJECTSIZE;
+		float objects_maxX = objects.x + OBJECTSIZE;
+		float objects_minY = objects.y - OBJECTSIZE;
+		float objects_maxY = objects.y + OBJECTSIZE;
+		float objects_minZ = objects.z + OBJECTSIZE;
+		float objects_maxZ = objects.z - OBJECTSIZE;
+		if (client_minX > objects_minX && client_minX < objects_maxX &&
+			client_minY > objects_minY && client_minY < objects_maxY &&
+			client_minZ > objects_minZ && client_minZ < objects_maxZ) {
+			SERVER_DATA server_data;
+			server_data.dataType = GAME_OVER;
+			send(clientInfo.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+			/* GAME_OVER된 유저 정보 바꾸기 - 서버에서 */
+		}
+	}
+}
+
+void COLL_CHECK(OBJECT_INFO objectInfo)
+{
+	float object_minX = objectInfo.x - OBJECTSIZE;	
+	float object_minY = objectInfo.y - OBJECTSIZE;	
+	float object_minZ = objectInfo.z + OBJECTSIZE;	
+	for (auto& clients : clientInfo) {
+		if (false == clients.alive) continue;
+		float client_minX = clients.x - USERSIZE;
+		float client_maxX = clients.x + USERSIZE;
+		float client_minY = clients.y - USERSIZE;
+		float client_maxY = clients.y + USERSIZE;
+		float client_minZ = clients.z + USERSIZE;
+		float client_maxZ = clients.z - USERSIZE;
+		if (object_minX > client_minX && client_minX < client_maxX &&
+			object_minY > client_minY && object_minY < client_maxY &&
+			object_minZ > client_minZ && object_minZ < client_maxZ) {
+			SERVER_DATA server_data;
+			server_data.dataType = GAME_OVER;
+			send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+			/* GAME_OVER된 유저 정보 바꾸기 - 서버에서 */
+		}
+	}
 }
 
 bool RESET_OBJECT(OBJECT_INFO object)
@@ -146,28 +200,10 @@ void SC_SEND(CLIENT_DATA clientData)
 		send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 	
 	// 위에 이동시킨 유저 결승점 통과여부 판단
-	if (true == GOAL_CHECK()) {
-		server_data.dataType = GAME_RESULT;
-		server_data.mission_result = true;
-		clientInfo[id].alive = false;
-		send(clientInfo[id].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-	}
+	GOAL_CHECK(clientInfo[id]);
 	
 	// 위에 이동시킨 유저 충돌여부 판단
-	if (true == COLL_CHECK()) {
-		server_data.dataType = GAME_RESULT;
-		server_data.mission_result = false;
-		/* 
-		의범 - 충돌시 위치변경이나 모든 유저한테 전달할 부분이 있을경우
-		for (auto& clients : clientInfo){
-			데이터 셋팅
-			send();
-		}
-		형식으로 변경하기
-		*/
-		//clientInfo[id].alive = false;		// 충돌시 게임 오버일 경우 주석 풀기 게임 오버 아닐 경우 삭제
-		send(clientInfo[id].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-	}
+	COLL_CHECK(clientInfo[id]);
 }
 
 DWORD WINAPI SC_TIME(LPVOID arg)
@@ -315,9 +351,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 				for (const auto& clients : clientInfo)
 					send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 
-				if (true == COLL_CHECK()) {
-					/* 위에 이동한 오브젝트와 유저의 충돌 검사 후 충돌 시 데이터 전송 파트 */
-				}
+				COLL_CHECK(objects);
 
 				if (true == RESET_OBJECT(objects)) {
 					objects.moving = false;
