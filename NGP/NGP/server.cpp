@@ -20,6 +20,7 @@ using namespace std;
 #define USERSIZE 0.5
 #define OBJECTSIZE 0.5
 #define GOALPOSZ -1000
+#define COUNTDOWN 10
 
 //queue<CLIENT_DATA*> recvQueue;
 //mutex recvLock;
@@ -28,6 +29,7 @@ CLIENT_INFO clientInfo[3];
 OBJECT_INFO objectInfo[6];
 
 bool gameStart = false;
+bool goal = false;
 /* 의범 - 이동시 이동 크기 설정하기(변수 타입 변경 가능) */
 float dx = 0.2;
 //short dy = 1;
@@ -100,7 +102,7 @@ void SC_LOGIN(int id)
 }
 
 /* 의범 -  Goal_Check()와 Coll_check() 작성하기 */
-bool GOAL_CHECK(CLIENT_INFO clientInfo)
+void GOAL_CHECK(CLIENT_INFO clientInfo)
 {
 	if (clientInfo.z <= GOALPOSZ) {
 		SERVER_DATA server_data;
@@ -108,10 +110,10 @@ bool GOAL_CHECK(CLIENT_INFO clientInfo)
 		server_data.mission_result = true;		
 		send(clientInfo.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 		/* 도착한 유저 정보 바꾸기 - 서버에서 */
-
+		clientInfo.alive = false;		
 		/* 남은시간 10초로 바꾸기 - 서버에서 */
+		goal = true;
 	}
-	return false;
 }
 
 void COLL_CHECK(CLIENT_INFO clientInfo)
@@ -133,6 +135,7 @@ void COLL_CHECK(CLIENT_INFO clientInfo)
 			server_data.dataType = GAME_OVER;
 			send(clientInfo.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 			/* GAME_OVER된 유저 정보 바꾸기 - 서버에서 */
+			clientInfo.alive = false;
 		}
 	}
 }
@@ -157,6 +160,7 @@ void COLL_CHECK(OBJECT_INFO objectInfo)
 			server_data.dataType = GAME_OVER;
 			send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 			/* GAME_OVER된 유저 정보 바꾸기 - 서버에서 */
+			clients.alive = false;
 		}
 	}
 }
@@ -233,6 +237,8 @@ DWORD WINAPI SC_TIME(LPVOID arg)
 		send_time = server_data.time;
 		auto end = clock();
 		server_data.time = MAXTIME - (int)((end - start) / 1000);
+		if (true == goal && server_data.time > COUNTDOWN)
+			server_data.time = COUNTDOWN;
 	}
 }
 
