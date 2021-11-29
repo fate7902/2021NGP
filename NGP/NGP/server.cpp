@@ -274,33 +274,35 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 {
 	auto start = INFINITE;
 	auto end = INFINITE;
-	int line = 0;
+	int firstline = 0;
+	int secondline = 0;
 	SERVER_DATA server_data;
 	server_data.dataType = LOCATION;
 	server_data.subDataType = OBJECT;
 
 	while (true) {
 		if (true == gameStart) {
-			/* 의범 - 오브젝트 자료구조 만든 뒤 각 프레임당 변동값 셋팅 후 적절히 변경하여 사용 */
+			// 의범 - 오브젝트 자료구조 만든 뒤 각 프레임당 변동값 셋팅 후 적절히 변경하여 사용 
 			// -6.25, 0 , 6.25
 			for (auto& objects : objectInfo) {
 				switch (objects.id) {
 				case 0:	// BOSS
 					objects.objectType = BOSS;
-					objects.z += 0.2;
+					objects.z -= 0.2;
+					
 					break;
 				case 1:	// TRACKER
 					objects.objectType = TRACKER;
-					objects.z += 0.2;
+					objects.z -= 0.2;
 					break;
 				default:
 					if (objects.objectType == NULL) {
 						if (2 == objects.id || 3 == objects.id) {
 							if (2 == objects.id) {
 								start = clock();
-								line = IntUid(dre);
+								firstline = IntUid(dre);
 							}
-							switch (line)
+							switch (firstline)
 							{
 							case 1:
 								objects.line = objects.id;
@@ -315,6 +317,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 								objects.line = objects.id - 1;
 								break;
 							}
+							objects.z = objectInfo[0].z - 3;
 							objects.objectType = uid(dre);
 							objects.moving = true;
 						}
@@ -322,11 +325,11 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 							if (4 == objects.id && false == objects.moving) {
 								end = clock();
 								if (end - start >= MOVEDELAY) {
-									line = IntUid(dre);
+									secondline = IntUid(dre);
 								}
 							}
-							if (0 != line) {
-								switch (line)
+							if (0 != secondline) {
+								switch (secondline)
 								{
 								case 1:
 									objects.line = objects.id - 2;
@@ -341,38 +344,47 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 									objects.line = objects.id - 3;
 									break;
 								}
+								objects.z = objectInfo[0].z - 3;
 								objects.objectType = uid(dre);
 								objects.moving = true;
 							}
 						}
 					}
 					else {
-						if (true == objects.moving)
+						if (true == objects.moving) {
 							objects.z -= 0.2;
+							cout << "boss: " << objects.z << endl;
+						}
 					}
 					break;
 				}
 				server_data.objectInfo = objects;
 
+
 				for (const auto& clients : clientInfo)
 					send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 
 				COLL_CHECK(objects);
+				if (objects.id != 0 || objects.id != 1) {
+					if (true == RESET_OBJECT(objects)) {
+						if (objects.id == 4)
+							secondline = 0;
 
-				if (true == RESET_OBJECT(objects)) {
-					objects.moving = false;
-					objects.objectType = NULL;
-					objects.x = INITPOSX;
-					objects.y = INITPOSY;
-					objects.z = INITPOSZ;
-					SERVER_DATA reset_server_data;
-					reset_server_data.dataType = LOCATION;
-					reset_server_data.subDataType = OBJECT;
-					reset_server_data.objectInfo = objects;					
-					for (const auto& clients : clientInfo)
-						send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+						objects.moving = false;
+						objects.objectType = NULL;
+						objects.x = INITPOSX;
+						objects.y = INITPOSY;
+						objects.z = INITPOSZ;
+						SERVER_DATA reset_server_data;
+						reset_server_data.dataType = LOCATION;
+						reset_server_data.subDataType = OBJECT;
+						reset_server_data.objectInfo = objects;
+						for (const auto& clients : clientInfo)
+							send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+					}
 				}
 			}
+
 		}
 	}
 }
@@ -440,19 +452,24 @@ int main(int argc, char* argv[]) {
 			SC_LOGIN(userCount++);
 
 			// 3명의 유저가 접속하면 게임 시작
-			if (clientInfo[0].alive && clientInfo[1].alive && clientInfo[2].alive) {
+			if (clientInfo[0].alive /* && clientInfo[1].alive && clientInfo[2].alive */ ) {
+
+				for (int i = 0; i < 6; ++i)
+					objectInfo[i].id = i;
+
 				objectInfo[0].x = 0;
 				objectInfo[0].y = 0;
-				objectInfo[0].z = 10;
+				objectInfo[0].z = 0;
+				
 
 				objectInfo[1].x = 0;
 				objectInfo[1].y = 0;
-				objectInfo[1].z = -10;			// BOSS와 20차이가 나야 한다.
+				objectInfo[1].z = 0;			// BOSS와 20차이가 나야 한다.
 
 				for (int i = 2; i < 6; ++i) {
 					objectInfo[i].x = 0;
 					objectInfo[i].y = 0;
-					objectInfo[i].z = 20;
+					objectInfo[i].z = 30;
 				}
 
 				SC_GAMESTART();

@@ -344,15 +344,18 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
             {
             case BOSS:
                 drawMonster(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+                cout << MonsterCoord.x << MonsterCoord.y << MonsterCoord.z << endl;
                 break;
             case TRACKER:
                 drawBehind(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
                 break;
             case BALL:
                 drawObject2(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+                cout << "ball" << endl;
                 break;
             case BULLDOZER:
                 drawObject1(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+                cout << "bulldozer" << endl;
                 break;
             }
         }

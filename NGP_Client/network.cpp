@@ -13,13 +13,15 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 			clients[server_data.id].z = server_data.z;
 			break;
 		case OBJECT:
-			objects[server_data.id].id = server_data.objectInfo.id;
-			objects[server_data.id].objectType = server_data.objectInfo.objectType;
-			objects[server_data.id].line = server_data.objectInfo.line;
-			objects[server_data.id].moving = server_data.objectInfo.moving;
-			objects[server_data.id].x = server_data.objectInfo.x;
-			objects[server_data.id].y = server_data.objectInfo.y;
-			objects[server_data.id].z = server_data.objectInfo.z;
+
+			objects[server_data.objectInfo.id].id = server_data.objectInfo.id;
+			objects[server_data.objectInfo.id].objectType = server_data.objectInfo.objectType;
+			objects[server_data.objectInfo.id].line = server_data.objectInfo.line;
+			objects[server_data.objectInfo.id].moving = server_data.objectInfo.moving;
+			
+			objects[server_data.objectInfo.id].x = server_data.objectInfo.x;
+			objects[server_data.objectInfo.id].y = server_data.objectInfo.y;
+			objects[server_data.objectInfo.id].z = server_data.objectInfo.z;
 			break;
 		}
 		break;
@@ -37,9 +39,9 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 			clients[server_data.id].z = server_data.z;
 			break;
 		}
-		for (int i = 0; i < 3; ++i) {
-			cout << i << " - " << clients[i].x << endl;
-		}
+		//for (int i = 0; i < 3; ++i) {
+			//cout << i << " - " << clients[i].x << endl;
+	//	}
 
 		break;
 	case GAME_START:   // 게임 시작
