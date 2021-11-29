@@ -37,7 +37,7 @@ GLvoid Keyboard(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
 
 void restart();
-
+Network net;
 //텍스처
 unsigned int texture1, texture2, texture3, texture4, texture5, texture6;
 
@@ -134,12 +134,12 @@ void COLL_CHECK(glm::vec3 user, glm::vec3 obj)
    
    if ((user.z -0.5 > obj.z - 1 && user.z + 0.5 < obj.z +1) && (user.x  - 0.5> obj.x - 2 && user.x +0.5 < obj.x + 2))
     {
-      gameover = true;
+       net.gameover = true;
 
     }
 }
 
-Network net;
+
 
 //함수들 작성의 시작
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -221,7 +221,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
     unsigned int projectionLocation;
     unsigned int objcolorLocation;
 
-    if (!gameover && !gamestart && !gameclear) {
+    if (!net.gameover && !gamestart && !gameclear) {
         glDisable(GL_DEPTH_TEST);
         //배경-------------------------------
         glUseProgram(s_program[3]);
@@ -280,7 +280,6 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         
         for (const auto& client : net.clients) {
             if (client.alive) {
-                cout << client.z << endl;
                 narutoCoord[client.id] = glm::vec3(client.x, client.y , client.z);        //캐릭터의 위치
             }
         }
@@ -344,18 +343,15 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
             {
             case BOSS:
                 drawMonster(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
-                cout << MonsterCoord.x << MonsterCoord.y << MonsterCoord.z << endl;
                 break;
             case TRACKER:
                 drawBehind(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
                 break;
             case BALL:
                 drawObject2(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
-                cout << "ball" << endl;
                 break;
             case BULLDOZER:
                 drawObject1(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
-                cout << "bulldozer" << endl;
                 break;
             }
         }
@@ -405,7 +401,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
-    if (gameover) {//gameover일때 종료
+    if (net.gameover) {//gameover일때 종료
         glUseProgram(s_program[3]);
         viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         transformMatrix = glm::mat4(1.0f);
@@ -968,10 +964,10 @@ GLvoid TimerFunction(int value) {
         }
 
     
-        if (gameover == false && transj < -5) {      // 아래로 떨어졌을 때,사망 사운드
+        if (net.gameover == false && transj < -5) {      // 아래로 떨어졌을 때,사망 사운드
             //glEnd();
             sound5();
-            gameover = true;
+            net.gameover = true;
         }
 
 
@@ -1091,7 +1087,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 
 
 void restart() {
-    gameover = false;
+    net.gameover = false;
     bool boolt = false;
 
     float setac = 0.0f;   //카메라 공전

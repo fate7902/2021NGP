@@ -5,9 +5,11 @@
 #include <WinSock2.h>
 #include <iostream>
 #include "..\NGP\NGP\protocol.h"
+
 using namespace std;
 
 DWORD WINAPI C_SAVE_PACKET(LPVOID arg);
+
 
 class Network {
 	bool m_start = false;
@@ -26,5 +28,7 @@ public:
 
 	int getMyId() { return m_id; }
 	bool getStart() { return m_start; }
+	void setStart(bool end) { m_start = end; }
 	SOCKET getSock() { return m_sock; }
+	bool gameover = false;
 };

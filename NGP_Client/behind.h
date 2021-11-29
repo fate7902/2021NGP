@@ -72,7 +72,7 @@ void drawBehind(GLuint program, int vertexCount, GLuint vao[], GLuint vbo[], glm
 
 
     basicChange = glm::mat4(1.0f);
-    basicChange = glm::translate(basicChange, glm::vec3(0.0, 0.8f, -20.0));      //¹Ù´ÚÀÇ À­¸éÀ¸·Î ÀÌµ¿
+    basicChange = glm::translate(basicChange, glm::vec3(0.0, 0.8f, 0.0));      //¹Ù´ÚÀÇ À­¸éÀ¸·Î ÀÌµ¿
     transformMatrix = basicChange * transformMatrix;
     transformMatrix = rotateMatrixm * transformMatrix;      //¸öÅëÀÇ È¸Àü
     transformMatrix = transMatrixpoint * transformMatrix;      //¸öÅëÀÇ ÀÌµ¿
@@ -105,7 +105,7 @@ void drawBehind(GLuint program, int vertexCount, GLuint vao[], GLuint vbo[], glm
 
 
     basicChange = glm::mat4(1.0f);
-    basicChange = glm::translate(basicChange, glm::vec3(-9.0, 0.8f, -18.0));      //¹Ù´ÚÀÇ À­¸éÀ¸·Î ÀÌµ¿
+    basicChange = glm::translate(basicChange, glm::vec3(-9.0, 0.8f, 0.0));      //¹Ù´ÚÀÇ À­¸éÀ¸·Î ÀÌµ¿
     transformMatrix = basicChange * transformMatrix;
     transformMatrix = rotateMatrixm * transformMatrix;      //¸öÅëÀÇ È¸Àü
     transformMatrix = transMatrixpoint * transformMatrix;      //¸öÅëÀÇ ÀÌµ¿
@@ -136,7 +136,7 @@ void drawBehind(GLuint program, int vertexCount, GLuint vao[], GLuint vbo[], glm
 
 
     basicChange = glm::mat4(1.0f);
-    basicChange = glm::translate(basicChange, glm::vec3(9.0, 0.8f, -18.0));      //¹Ù´ÚÀÇ À­¸éÀ¸·Î ÀÌµ¿
+    basicChange = glm::translate(basicChange, glm::vec3(9.0, 0.8f, 0.0));      //¹Ù´ÚÀÇ À­¸éÀ¸·Î ÀÌµ¿
     transformMatrix = basicChange * transformMatrix;
     transformMatrix = rotateMatrixm * transformMatrix;      //¸öÅëÀÇ È¸Àü
     transformMatrix = transMatrixpoint * transformMatrix;      //¸öÅëÀÇ ÀÌµ¿

@@ -16,7 +16,7 @@
 #include "network.h"
 
 bool gamestart = true;
-bool gameover = false;
+
 bool version2 = false;
 bool version3 = false;
 bool perfectclear = false;

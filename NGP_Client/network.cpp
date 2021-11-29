@@ -22,6 +22,10 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 			objects[server_data.objectInfo.id].x = server_data.objectInfo.x;
 			objects[server_data.objectInfo.id].y = server_data.objectInfo.y;
 			objects[server_data.objectInfo.id].z = server_data.objectInfo.z;
+
+			if (TRACKER == server_data.objectInfo.objectType) {
+				cout << "트래커 - " << objects[server_data.objectInfo.id].z << endl;
+			}
 			break;
 		}
 		break;
@@ -49,6 +53,12 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 		break;
 	case TIME: // 시간
 		m_game_time = server_data.time;
+		break;
+	case GAME_OVER:
+		gameover = true;
+		setStart(false);
+		break;
+	case GAME_RESULT:
 		break;
 	}
 }
@@ -119,6 +129,7 @@ void Network::CS_MOVE(char key)
 	client_data.id = m_id;
 
 	// switch -> if로 바꿔야 한다. : 동시에 누를 수 있게 ( if문 각각에 send를 해야 한다.)
+
 	switch (key) {
 	case 'w':
 	case 'W':

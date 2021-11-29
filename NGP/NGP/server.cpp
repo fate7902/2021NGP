@@ -13,14 +13,15 @@ using namespace std;
 
 #define MAXTIME 100
 #define INFINITE -9999
-#define MOVEDELAY 1000
+#define MOVEDELAY 6000
 #define INITPOSX 0
 #define INITPOSY 0
 #define INITPOSZ 0
-#define USERSIZE 0.5
-#define OBJECTSIZE 0.5
+#define USERSIZE 2
+#define OBJECTSIZE 2
 #define GOALPOSZ -1000
 #define COUNTDOWN 10
+#define OBJECTPOSX 4
 
 //queue<CLIENT_DATA*> recvQueue;
 //mutex recvLock;
@@ -120,14 +121,14 @@ void COLL_CHECK(CLIENT_INFO clientInfo)
 {
 	float client_minX = clientInfo.x - USERSIZE;
 	float client_minY = clientInfo.y - USERSIZE;
-	float client_minZ = clientInfo.z + USERSIZE;
+	float client_minZ = clientInfo.z - USERSIZE;
 	for (const auto& objects : objectInfo) {
 		float objects_minX = objects.x - OBJECTSIZE;
 		float objects_maxX = objects.x + OBJECTSIZE;
 		float objects_minY = objects.y - OBJECTSIZE;
 		float objects_maxY = objects.y + OBJECTSIZE;
-		float objects_minZ = objects.z + OBJECTSIZE;
-		float objects_maxZ = objects.z - OBJECTSIZE;
+		float objects_minZ = objects.z - OBJECTSIZE;
+		float objects_maxZ = objects.z + OBJECTSIZE;
 		if (client_minX > objects_minX && client_minX < objects_maxX &&
 			client_minY > objects_minY && client_minY < objects_maxY &&
 			client_minZ > objects_minZ && client_minZ < objects_maxZ) {
@@ -142,32 +143,41 @@ void COLL_CHECK(CLIENT_INFO clientInfo)
 
 void COLL_CHECK(OBJECT_INFO objectInfo)
 {
-	float object_minX = objectInfo.x - OBJECTSIZE;	
-	float object_minY = objectInfo.y - OBJECTSIZE;	
-	float object_minZ = objectInfo.z + OBJECTSIZE;	
-	for (auto& clients : clientInfo) {
-		if (false == clients.alive) continue;
-		float client_minX = clients.x - USERSIZE;
-		float client_maxX = clients.x + USERSIZE;
-		float client_minY = clients.y - USERSIZE;
-		float client_maxY = clients.y + USERSIZE;
-		float client_minZ = clients.z + USERSIZE;
-		float client_maxZ = clients.z - USERSIZE;
-		if (object_minX > client_minX && client_minX < client_maxX &&
-			object_minY > client_minY && object_minY < client_maxY &&
-			object_minZ > client_minZ && object_minZ < client_maxZ) {
+	if (objectInfo.id == 1) {
+		if (objectInfo.z <= clientInfo[0].z) {
 			SERVER_DATA server_data;
 			server_data.dataType = GAME_OVER;
-			send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-			/* GAME_OVER된 유저 정보 바꾸기 - 서버에서 */
-			clients.alive = false;
+			send(clientInfo[0].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+
 		}
 	}
+	//float object_minX = objectInfo.x - OBJECTSIZE;	
+	//float object_minY = objectInfo.y - OBJECTSIZE;	
+	//float object_minZ = objectInfo.z - OBJECTSIZE;	
+	//for (auto& clients : clientInfo) {
+	//	if (false == clients.alive) continue;
+	//	float client_minX = clients.x - USERSIZE;
+	//	float client_maxX = clients.x + USERSIZE;
+	//	float client_minY = clients.y - USERSIZE;
+	//	float client_maxY = clients.y + USERSIZE;
+	//	float client_minZ = clients.z - USERSIZE;
+	//	float client_maxZ = clients.z + USERSIZE;
+	//	if (object_minX > client_minX && object_minX < client_maxX &&
+	//		object_minY > client_minY && object_minY < client_maxY &&
+	//		object_minZ > client_minZ && object_minZ < client_maxZ) {
+	//		SERVER_DATA server_data;
+	//		server_data.dataType = GAME_OVER;
+	//		send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+	//		/* GAME_OVER된 유저 정보 바꾸기 - 서버에서 */
+	//		clients.alive = false;
+	//	}
+	//}
 }
 
 bool RESET_OBJECT(OBJECT_INFO object)
 {
-	if (objectInfo[1].z > object.z && true == object.moving) {
+	if (objectInfo[1].z < object.z && true == object.moving) {
+		cout << "트래커 z - " << objectInfo[1].z << ",   장애물 z - " << object.z << endl;
 		return true;
 	}
 	return false;
@@ -274,6 +284,8 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 {
 	auto start = INFINITE;
 	auto end = INFINITE;
+	auto start_w = INFINITE;
+	auto end_w = INFINITE;
 	int firstline = 0;
 	int secondline = 0;
 	SERVER_DATA server_data;
@@ -282,109 +294,131 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 
 	while (true) {
 		if (true == gameStart) {
-			// 의범 - 오브젝트 자료구조 만든 뒤 각 프레임당 변동값 셋팅 후 적절히 변경하여 사용 
-			// -6.25, 0 , 6.25
-			for (auto& objects : objectInfo) {
-				switch (objects.id) {
-				case 0:	// BOSS
-					objects.objectType = BOSS;
-					objects.z -= 0.2;
-					
-					break;
-				case 1:	// TRACKER
-					objects.objectType = TRACKER;
-					objects.z -= 0.2;
-					break;
-				default:
-					if (objects.objectType == NULL) {
-						if (2 == objects.id || 3 == objects.id) {
-							if (2 == objects.id) {
-								start = clock();
-								firstline = IntUid(dre);
-							}
-							switch (firstline)
-							{
-							case 1:
-								objects.line = objects.id;
-								break;
-							case 2:
-								if (2 == objects.id)
-									objects.line = 1;
-								else
-									objects.line = objects.id;
-								break;
-							case 3:
-								objects.line = objects.id - 1;
-								break;
-							}
-							objects.z = objectInfo[0].z - 3;
-							objects.objectType = uid(dre);
-							objects.moving = true;
-						}
-						else {
-							if (4 == objects.id && false == objects.moving) {
-								end = clock();
-								if (end - start >= MOVEDELAY) {
-									secondline = IntUid(dre);
-								}
-							}
-							if (0 != secondline) {
-								switch (secondline)
-								{
-								case 1:
-									objects.line = objects.id - 2;
-									break;
-								case 2:
-									if (4 == objects.id)
-										objects.line = 1;
-									else
-										objects.line = 3;
-									break;
-								case 3:
-									objects.line = objects.id - 3;
-									break;
-								}
-								objects.z = objectInfo[0].z - 3;
-								objects.objectType = uid(dre);
-								objects.moving = true;
-							}
-						}
-					}
-					else {
-						if (true == objects.moving) {
+			if (start_w == INFINITE) {
+				start_w = clock();
+			}
+			else {
+				end_w = clock();
+				if (end_w - start_w > 100) {
+					// 의범 - 오브젝트 자료구조 만든 뒤 각 프레임당 변동값 셋팅 후 적절히 변경하여 사용 
+					// -6.25, 0 , 6.25
+					for (auto& objects : objectInfo) {
+						switch (objects.id) {
+						case 0:	// BOSS
+							objects.objectType = BOSS;
 							objects.z -= 0.2;
-							cout << "boss: " << objects.z << endl;
+							//cout << "fsdfs\n";
+							break;
+						case 1:	// TRACKER
+							objects.objectType = TRACKER;
+							objects.z -= 0.2;
+							cout << "트래커 - " << objects.z << endl;
+							break;
+						default:
+							if (objects.objectType == NULL) {
+								if (2 == objects.id || 3 == objects.id) {
+									if (2 == objects.id) {
+										start = clock();
+										firstline = IntUid(dre);
+									}
+									switch (firstline)
+									{
+									case 1:
+										objects.line = objects.id;
+										objects.x = OBJECTPOSX * (objects.id - 2);
+										break;
+									case 2:
+										if (2 == objects.id) {
+											objects.line = 1;
+											objects.x = -OBJECTPOSX;
+										}
+										else {
+											objects.line = objects.id;
+											objects.x = OBJECTPOSX;
+										}
+										break;
+									case 3:
+										objects.line = objects.id - 1;
+										objects.x = -OBJECTPOSX * (3 - objects.id);
+										break;
+									}
+									objects.z = objectInfo[0].z - 3;
+									objects.objectType = uid(dre);
+									objects.moving = true;
+								}
+								else {
+									if (4 == objects.id && false == objects.moving) {
+										end = clock();
+										if (end - start >= MOVEDELAY) {
+											secondline = IntUid(dre);
+										}
+									}
+									if (0 != secondline) {
+										switch (secondline)
+										{
+										case 1:
+											objects.line = objects.id - 2;
+											objects.x = OBJECTPOSX * (objects.id - 4);
+											break;
+										case 2:
+											if (4 == objects.id) {
+												objects.line = 1;
+												objects.x = -OBJECTPOSX;
+											}
+											else {
+												objects.line = 3;
+												objects.x = OBJECTPOSX;
+											}
+											break;
+										case 3:
+											objects.line = objects.id - 3;
+											objects.x = -OBJECTPOSX * (5 - objects.id);
+											break;
+										}
+										objects.z = objectInfo[0].z - 3;
+										objects.objectType = uid(dre);
+										objects.moving = true;
+									}
+								}
+							}
+							else {
+								if (true == objects.moving) {
+									objects.z += 0.2;
+									cout << "장애물[" << objects.id << "] - " << ", " << objects.x << ", " << objects.z << endl;
+								}
+							}
+							break;
 						}
-					}
-					break;
-				}
-				server_data.objectInfo = objects;
+						server_data.objectInfo = objects;
 
 
-				for (const auto& clients : clientInfo)
-					send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-
-				COLL_CHECK(objects);
-				if (objects.id != 0 || objects.id != 1) {
-					if (true == RESET_OBJECT(objects)) {
-						if (objects.id == 4)
-							secondline = 0;
-
-						objects.moving = false;
-						objects.objectType = NULL;
-						objects.x = INITPOSX;
-						objects.y = INITPOSY;
-						objects.z = INITPOSZ;
-						SERVER_DATA reset_server_data;
-						reset_server_data.dataType = LOCATION;
-						reset_server_data.subDataType = OBJECT;
-						reset_server_data.objectInfo = objects;
 						for (const auto& clients : clientInfo)
 							send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+
+						COLL_CHECK(objects);
+
+						if (objects.id != 0 && objects.id != 1) {
+							if (true == RESET_OBJECT(objects)) {
+								if (objects.id == 4)
+									secondline = 0;
+
+								objects.moving = false;
+								objects.objectType = NULL;
+								objects.x = INITPOSX;
+								objects.y = INITPOSY;
+								objects.z = objectInfo[0].z - 100;
+								SERVER_DATA reset_server_data;
+								reset_server_data.dataType = LOCATION;
+								reset_server_data.subDataType = OBJECT;
+								reset_server_data.objectInfo = objects;
+								for (const auto& clients : clientInfo)
+									send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+							}
+						}
 					}
+					start_w = INFINITE;
 				}
 			}
-
 		}
 	}
 }
@@ -459,12 +493,12 @@ int main(int argc, char* argv[]) {
 
 				objectInfo[0].x = 0;
 				objectInfo[0].y = 0;
-				objectInfo[0].z = 0;
+				objectInfo[0].z = -10;
 				
 
 				objectInfo[1].x = 0;
 				objectInfo[1].y = 0;
-				objectInfo[1].z = 0;			// BOSS와 20차이가 나야 한다.
+				objectInfo[1].z = 10;			// BOSS와 20차이가 나야 한다.
 
 				for (int i = 2; i < 6; ++i) {
 					objectInfo[i].x = 0;

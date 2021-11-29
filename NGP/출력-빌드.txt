@@ -1,0 +1,18 @@
+﻿빌드 시작...
+1>------ 빌드 시작: 프로젝트: NGP, 구성: Debug x64 ------
+1>server.cpp
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(15,1): warning C4005: 'INFINITE': 매크로 재정의
+1>C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\winbase.h(791): message : 'INFINITE'의 이전 정의를 참조하십시오.
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(35,15): warning C4305: '초기화 중': 'double'에서 'float'(으)로 잘립니다.
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(37,15): warning C4305: '초기화 중': 'double'에서 'float'(으)로 잘립니다.
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(309,24): warning C4305: '-=': 'double'에서 'float'(으)로 잘립니다.
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(314,24): warning C4305: '-=': 'double'에서 'float'(으)로 잘립니다.
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(328,34): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(342,35): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(361,35): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(375,36): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(386,26): warning C4305: '+=': 'double'에서 'float'(으)로 잘립니다.
+1>C:\Users\의범\2021NGP\NGP\NGP\server.cpp(481,33): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+1>NGP.vcxproj -> C:\Users\의범\2021NGP\NGP\x64\Debug\NGP.exe
+1>"NGP.vcxproj" 프로젝트를 빌드했습니다.
+========== 빌드: 성공 1, 실패 0, 최신 0, 생략 0 ==========
