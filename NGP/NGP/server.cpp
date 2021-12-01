@@ -144,85 +144,64 @@ void COLL_CHECK(CLIENT_INFO clientInfo)
 void COLL_CHECK(OBJECT_INFO objectInfo)
 {
 
-	if (objectInfo.id == 1) {                   //뒤에서 오는 장애물과는 충돌 ok
-		if (objectInfo.z <= clientInfo[0].z) {
-			SERVER_DATA server_data;
-			server_data.dataType = GAME_OVER;
-			send(clientInfo[0].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-			cout << "트래커 충돌" << endl;
+	for (int i = 0; i < 3; ++i) {
+		if (objectInfo.id == 1) {                   //뒤에서 오는 장애물과는 충돌 ok
+			if (objectInfo.z <= clientInfo[i].z) {
+				SERVER_DATA server_data;
+				server_data.dataType = GAME_OVER;
+				send(clientInfo[i].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+				cout << "트래커 충돌" << endl;
+
+			}
+		}
+		else if (objectInfo.id != 0 && objectInfo.id != 1) {
+
+			if (true == clientInfo[i].alive && objectInfo.objectType != NULL) {
+
+
+				if ((clientInfo[i].x - USERSIZE < objectInfo.x - OBJECTSIZE) &&
+					(clientInfo[i].x + USERSIZE > objectInfo.x - OBJECTSIZE) &&
+					(objectInfo.x - OBJECTSIZE < clientInfo[i].x + USERSIZE) &&
+					(clientInfo[i].x + USERSIZE < objectInfo.x + OBJECTSIZE) &&
+					(objectInfo.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
+					(clientInfo[i].z - USERSIZE <= objectInfo.z + OBJECTSIZE2)) {
+					SERVER_DATA server_data;
+					server_data.dataType = GAME_OVER;
+					send(clientInfo[i].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+					clientInfo[i].alive = false;
+
+				}
+				else if ((objectInfo.x - OBJECTSIZE <= clientInfo[i].x - USERSIZE) &&
+					(clientInfo[i].x - USERSIZE <= objectInfo.x + OBJECTSIZE) &&
+					(objectInfo.x - OBJECTSIZE <= clientInfo[i].x + USERSIZE) &&
+					(clientInfo[i].x + USERSIZE <= objectInfo.x + OBJECTSIZE) &&
+					(objectInfo.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
+					(clientInfo[i].z - USERSIZE <= objectInfo.z + OBJECTSIZE2)) {
+				
+					SERVER_DATA server_data;
+					server_data.dataType = GAME_OVER;
+					send(clientInfo[i].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+					clientInfo[i].alive = false;
+
+				}
+				else if ((clientInfo[i].x - USERSIZE < objectInfo.x + OBJECTSIZE) &&
+					(objectInfo.x + OBJECTSIZE < clientInfo[i].x + USERSIZE) &&
+					(objectInfo.x - OBJECTSIZE < clientInfo[i].x - USERSIZE) &&
+					(clientInfo[i].x - USERSIZE < objectInfo.x + OBJECTSIZE) &&
+					(objectInfo.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
+					(clientInfo[i].z - USERSIZE <= objectInfo.z + OBJECTSIZE2)) {
+
+					SERVER_DATA server_data;
+					server_data.dataType = GAME_OVER;
+					send(clientInfo[i].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+					clientInfo[i].alive = false;
+
+				}
+			}
 
 		}
 	}
-	else if (objectInfo.id  != 0 && objectInfo.id != 1) {
-		if (true == clientInfo[0].alive && objectInfo.objectType != NULL) {
-			cout << "id" << objectInfo.id <<": "<<  objectInfo.x - OBJECTSIZE << " " << objectInfo.x + OBJECTSIZE << endl;
-	
-			if ((clientInfo[0].x - USERSIZE < objectInfo.x - OBJECTSIZE < clientInfo[0].x + USERSIZE) &&
-				(objectInfo.x - OBJECTSIZE < clientInfo[0].x + USERSIZE < objectInfo.x + OBJECTSIZE) &&
-				 (objectInfo.z - OBJECTSIZE2 <= clientInfo[0].z - USERSIZE <= objectInfo.z + OBJECTSIZE2)) {
-				cout << "충돌1" << endl;
-				cout << "오브젝트 id: " << objectInfo.id << endl;
-				cout << "클라x: " << clientInfo[0].x << ", " << clientInfo[0].x - USERSIZE << endl;
-				cout << "장애물 x : " << objectInfo.x << endl;
-				cout << "클라z: " << clientInfo[0].z << "  장애물 z: " << objectInfo.z << endl;
-		
-				SERVER_DATA server_data;
-				server_data.dataType = GAME_OVER;
-				send(clientInfo[0].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-				clientInfo[0].alive = false;
 
-			}
-			else if ((objectInfo.x - OBJECTSIZE <= clientInfo[0].x - USERSIZE <= objectInfo.x + OBJECTSIZE) && objectInfo.z - OBJECTSIZE2 <= clientInfo[0].z - USERSIZE <= objectInfo.z + OBJECTSIZE2) {
-				cout << "충돌2" << endl;
-				cout << "오브젝트 id: " << objectInfo.id << endl;
-				cout << "클라x: " << clientInfo[0].x << "  장애물 x: " << objectInfo.x << endl;
-				cout << "클라z: " << clientInfo[0].z << "  장애물 z: " << objectInfo.z << endl;
-			
-				SERVER_DATA server_data;
-				server_data.dataType = GAME_OVER;
-				send(clientInfo[0].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-				clientInfo[0].alive = false;
-
-			}
-			else if ((clientInfo[0].x - USERSIZE < objectInfo.x + OBJECTSIZE < clientInfo[0].x + USERSIZE) &&
-				   (objectInfo.x - OBJECTSIZE < clientInfo[0].x - USERSIZE < objectInfo.x + OBJECTSIZE) &&
-				(objectInfo.z - OBJECTSIZE2 <= clientInfo[0].z - USERSIZE <= objectInfo.z + OBJECTSIZE2) ){
-				cout << "충돌3" << endl;
-				cout << "오브젝트 id: " << objectInfo.id << endl;
-				cout << "클라x: " << clientInfo[0].x << "  장애물 x: " << objectInfo.x << endl;
-				cout << "클라z: " << clientInfo[0].z << "  장애물 z: " << objectInfo.z << endl;
-		
-				SERVER_DATA server_data;
-				server_data.dataType = GAME_OVER;
-				send(clientInfo[0].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-				clientInfo[0].alive = false;
-
-			}
-		}
-
-		}
-	
-	//float object_minX = objectInfo.x - OBJECTSIZE;	
-	//float object_minY = objectInfo.y - OBJECTSIZE;	
-	//float object_minZ = objectInfo.z - OBJECTSIZE;	
-	//for (auto& clients : clientInfo) {
-	//	if (false == clients.alive) continue;
-	//	float client_minX = clients.x - USERSIZE;
-	//	float client_maxX = clients.x + USERSIZE;
-	//	float client_minY = clients.y - USERSIZE;
-	//	float client_maxY = clients.y + USERSIZE;
-	//	float client_minZ = clients.z - USERSIZE;
-	//	float client_maxZ = clients.z + USERSIZE;
-	//	if (object_minX > client_minX && object_minX < client_maxX &&
-	//		object_minY > client_minY && object_minY < client_maxY &&
-	//		object_minZ > client_minZ && object_minZ < client_maxZ) {
-	//		SERVER_DATA server_data;
-	//		server_data.dataType = GAME_OVER;
-	//		send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-	//		/* GAME_OVER된 유저 정보 바꾸기 - 서버에서 */
-	//		clients.alive = false;
-	//	}
-	//}
 }
 
 bool RESET_OBJECT(OBJECT_INFO object)
@@ -360,86 +339,52 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 						switch (objects.id) {
 						case 0:	// BOSS
 							objects.objectType = BOSS;
-							objects.z -= 0.2;
+							objects.z -= 0.6;
 							
 							//cout << "fsdfs\n";
 							break;
 						case 1:	// TRACKER
 							objects.objectType = TRACKER;
-						//	objects.z -= 0.2;
+							objects.z -= 0.3;
 							//cout << "트래커 - " << objects.z << endl;
 							break;
 						default:
 							if (objects.objectType == NULL) {
-								if (2 == objects.id /*|| 3 == objects.id*/) {
+								if (2 == objects.id || 3 == objects.id) {
 									if (2 == objects.id ) {   // id:2 먼저 라인 정하기 
 										start = clock();
 										firstline = IntUid(dre);
 									}
-									else 
-										firstline2 = IntUid(dre);
 									switch (firstline)
 									{
 									case 1:
-										if (objects.id == 2) {
-											objects.line = 1;
-											objects.x = -6.0f;
-										}
-										if (firstline2 == 1 && objects.id == 3) {
-											objects.line = 2;
-											objects.x = 0.0f;
-										}
-										else if ((firstline2 == 2 || firstline2 == 3) && objects.id == 3) {
-											objects.line = 3;
-											objects.x = 6.0f;
-										}
-										//objects.line = objects.id;
-										//objects.x = OBJECTPOSX * (objects.id - 2);
+										objects.line = objects.id;
+										objects.x = OBJECTPOSX * (objects.id - 2);   //0  //4
 										break;
-									case 2:		
-										if (objects.id == 2) {
-											objects.line = 2;
-											objects.x = 0.0f;
-										}
-										if (firstline2 == 1 && objects.id == 3) {
+									case 2:
+										if (2 == objects.id) {
 											objects.line = 1;
-											objects.x = -6.0f;
-										}
-										else if ((firstline2 == 2 || firstline2 == 3) && objects.id == 3) {
-											objects.line = 3;
-											objects.x = 6.0f;
-										}
-										/*if (2 == objects.id) {
-											objects.line = 1;
-											objects.x -= OBJECTPOSX;
+											objects.x = -OBJECTPOSX;      //-4
 										}
 										else {
 											objects.line = objects.id;
-											objects.x = OBJECTPOSX;
-										}*/
+											objects.x = OBJECTPOSX;         //4
+										}
 										break;
 									case 3:
-										if (objects.id == 2) {
-										objects.line = 3;
-										objects.x = 6.0f;
-										}
-										if (firstline2 == 1 && objects.id == 3) {
-											objects.line =1;
-											objects.x = -6.0f;
-										}
-										else if ((firstline2 == 2 || firstline2 == 3) && objects.id == 3) {
-											objects.line = 2;
-											objects.x = 0.0f;
-										}
-										//objects.line = objects.id - 1;
-										//objects.x -= OBJECTPOSX * (3 - objects.id);
+										objects.line = objects.id - 1;
+										objects.x = -OBJECTPOSX * (3 - objects.id);  //-4   //0 
 										break;
 									}
+
 									objects.z = objectInfo[0].z - 3;        //장애물 종류 정함 
-									objects.objectType = BULLDOZER;
+									if(2 == objects.id)
+										objects.objectType = BULLDOZER;
+									else
+										objects.objectType = BALL;
 									objects.moving = true;
 								}
-							/*	else {
+							/*	else { //수정하자 
 									if (4 == objects.id && false == objects.moving) {
 										end = clock();
 										if (end - start >= MOVEDELAY) {
@@ -476,8 +421,8 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 							}
 							else {   // 장애물 종류 다 정해지면 움직여
 								if (true == objects.moving) {
-									objects.z += 0.2;
-								//	cout << "장애물[" << objects.id << "] - " <<  " , " << objects.x << ", " << objects.z << endl;
+									objects.z += 0.8;
+								
 								}
 							}
 							break;
@@ -487,7 +432,9 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 						if (objectInfo->id != 4 && objectInfo->id != 5) {
 							for (const auto& clients : clientInfo)
 								send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+							cout << "장애물[" << objects.id << "] - " << " , " << objects.x << ", " << objects.z << endl;
 						}
+
 
 						
 						COLL_CHECK(objects);
@@ -582,7 +529,7 @@ int main(int argc, char* argv[]) {
 			SC_LOGIN(userCount++);
 
 			// 3명의 유저가 접속하면 게임 시작
-			if (clientInfo[0].alive /* && clientInfo[1].alive && clientInfo[2].alive */  ) {
+			if (clientInfo[0].alive  && clientInfo[1].alive && clientInfo[2].alive   ) {
 
 				for (int i = 0; i < 6; ++i)
 					objectInfo[i].id = i;

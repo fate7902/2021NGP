@@ -955,8 +955,8 @@ GLvoid TimerFunction(int value) {
             pointz -= 0.1;
         }
 
-   
-        else if (boola || boolw || boold) {  //ÆÈÈ¸Àü 
+        boola = true;
+       // else if (boola || boolw || boold) {  //ÆÈÈ¸Àü 
             if (boolt) {
                 setat += setatspeed;
                 if (setat >= 60.0f) {
@@ -971,7 +971,7 @@ GLvoid TimerFunction(int value) {
                     boolt = true;
                 }
             }
-        }
+      //  }
 
     
        // if (net.gameover == false && transj < -5) {      // ¾Æ·¡·Î ¶³¾îÁ³À» ¶§,»ç¸Á »ç¿îµå

@@ -76,7 +76,7 @@ void drawObject2(GLuint program, int vertexCount, GLuint vao[], GLuint vbo[], gl
 
 
     basicChange = glm::mat4(1.0f);
-    basicChange = glm::translate(basicChange, glm::vec3(5.0, 0.8f,0.0));      //바닥의 윗면으로 이동
+    basicChange = glm::translate(basicChange, glm::vec3(0.0, 0.8f,0.0));      //바닥의 윗면으로 이동
     transformMatrix = basicChange * transformMatrix;
     transformMatrix = rotateMatrixm * transformMatrix;      //몸통의 회전
     transformMatrix = transMatrixpoint * transformMatrix;      //몸통의 이동
