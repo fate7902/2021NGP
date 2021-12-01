@@ -24,7 +24,7 @@ public:
 
 	void C_UPDATE(SERVER_DATA server_data);
 	void network();
-	void CS_MOVE(char key);
+	void CS_MOVE();
 
 	int getMyId() { return m_id; }
 	bool getStart() { return m_start; }

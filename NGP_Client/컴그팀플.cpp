@@ -34,6 +34,7 @@ char* filetobuf(char* file);   //쉐이더를 사용하기 위해 파일을 가져오는 함수
 GLvoid TimerFunction(int value);
 GLvoid ObjectTimer(int value);
 GLvoid Keyboard(unsigned char key, int x, int y);
+GLvoid KeyboardUp(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
 
 void restart();
@@ -92,6 +93,12 @@ bool mid_Object = false;
 bool set_Object1 = false;
 bool set_Object2 = false;
 
+// 키 입력 상태 
+bool key_w_state = false;
+bool key_s_state = false;
+bool key_a_state = false;
+bool key_d_state = false;
+
 bool boolw2 = false;  //대각선 이동시 속도 줄이기 위함 
 //타이머 1
 unsigned int timer2 = 1000;
@@ -140,6 +147,7 @@ void COLL_CHECK(glm::vec3 user, glm::vec3 obj)
 }
 
 
+bool state = true;
 
 //함수들 작성의 시작
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -178,25 +186,24 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     net.objects[4].z = -999;
     net.objects[5].z = -999;
 
-
-    /*net.objects[0].z = -10;
-    net.objects[1].z = 10;
-    net.objects[2].z = -20;*/
-
     glutDisplayFunc(drawScene);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(Keyboard);
+    glutKeyboardUpFunc(KeyboardUp);
+
     glutMouseFunc(Mouse);
 
     glutTimerFunc(timer2, TimerFunction, 0);
     //glutTimerFunc(3000, ObjectTimer, 0);  //1초
 
     glutMainLoop();
-
 }
 
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
+    if (key_w_state || key_s_state || key_a_state || key_d_state) {
+        net.CS_MOVE();
+    }
     //--- 변경된 배경색 설정
     glClearColor(1.0, 1.0, 1.0, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -988,113 +995,131 @@ GLvoid TimerFunction(int value) {
 
 GLvoid Keyboard(unsigned char key, int x, int y) {
     if (net.getStart()) {
-        net.CS_MOVE(key);
+        if (key == 'w')
+            key_w_state = true;
+        if (key == 's')
+            key_s_state = true;
+        if (key == 'a')
+            key_a_state = true;
+        if (key == 'd')
+            key_d_state = true;
 
-    //    switch (key) {
-    //    case 'W':
-    //    case 'w':
-    //        setam = 180.0f;
-    //        boolw = true;
-    //        boola = false;
-    //        boold = false;
-    //       // pointz -= 0.5;
-    //        break;
-    //    case 'S':
-    //    case 's':
-    //        setam = -180.0f;
-    //        boolw = false;
-    //        boolw2 = false;
-    //        boola = false;
-    //        boold = false;
+        //    switch (key) {
+        //    case 'W':
+        //    case 'w':
+        //        setam = 180.0f;
+        //        boolw = true;
+        //        boola = false;
+        //        boold = false;
+        //       // pointz -= 0.5;
+        //        break;
+        //    case 'S':
+        //    case 's':
+        //        setam = -180.0f;
+        //        boolw = false;
+        //        boolw2 = false;
+        //        boola = false;
+        //        boold = false;
 
-    //        break;
-    //    case 'A':
-    //    case 'a':
-    //        if(boolw == true || boolw2 == true)
-    //            setam = -135.0f;
-    //        else 
-    //            setam = -90.0f;
-    //    //    boolw = false;
-    //        boola = true;
-    //        boold = false;
-    //        boolw = false;
-    //        boolw2 = true;
-    //        pointx -= 0.2;        //코딩용
-    //        if (pointx <= -5.5) {
-    //            pointx = -5.5;
-    //        }
-    //        break;
-    //    case 'd':
-    //    case 'D':
-    //        if (boolw == true || boolw2 == true)
-    //            setam = 135.0f;
-    //        else
-    //            setam = 90.0f;
-    //   //     boolw = false;
-    //        boola = false;
-    //        boold = true;
-    //        boolw = false;
-    //        boolw2 = true;
-    //        pointx += 0.2;        //코딩용
-    //        if (pointx >= 5.5) {
-    //            pointx = 5.5;
-    //        }
-    //        break;
-    //    case 'I':
-    //    case 'i':
-    //        boolw = false;
-    //        boold = false;
-    //        break;
-    //    case 'j':
-    //    case 'J':
-    //        sound3();
-    //        if ( !boolj2) {
-    //            if (transj >= 0.0) {
-    //                boolj = true;
-    //                boolj2 = true;
-    //            }
-    //        }
-    //        break;
+        //        break;
+        //    case 'A':
+        //    case 'a':
+        //        if(boolw == true || boolw2 == true)
+        //            setam = -135.0f;
+        //        else 
+        //            setam = -90.0f;
+        //    //    boolw = false;
+        //        boola = true;
+        //        boold = false;
+        //        boolw = false;
+        //        boolw2 = true;
+        //        pointx -= 0.2;        //코딩용
+        //        if (pointx <= -5.5) {
+        //            pointx = -5.5;
+        //        }
+        //        break;
+        //    case 'd':
+        //    case 'D':
+        //        if (boolw == true || boolw2 == true)
+        //            setam = 135.0f;
+        //        else
+        //            setam = 90.0f;
+        //   //     boolw = false;
+        //        boola = false;
+        //        boold = true;
+        //        boolw = false;
+        //        boolw2 = true;
+        //        pointx += 0.2;        //코딩용
+        //        if (pointx >= 5.5) {
+        //            pointx = 5.5;
+        //        }
+        //        break;
+        //    case 'I':
+        //    case 'i':
+        //        boolw = false;
+        //        boold = false;
+        //        break;
+        //    case 'j':
+        //    case 'J':
+        //        sound3();
+        //        if ( !boolj2) {
+        //            if (transj >= 0.0) {
+        //                boolj = true;
+        //                boolj2 = true;
+        //            }
+        //        }
+        //        break;
 
-    //    case 'P':
-    //    case 'p':
-    //        glutLeaveMainLoop();
-    //        break;
-    //    case 27:    /* Esc - Quits the program. */
-    //        printf("done.\n");
-    //        exit(1);
-    //        break;
+        //    case 'P':
+        //    case 'p':
+        //        glutLeaveMainLoop();
+        //        break;
+        //    case 27:    /* Esc - Quits the program. */
+        //        printf("done.\n");
+        //        exit(1);
+        //        break;
 
-    //    case ' ':    /* Space - toggles mode.     */
-    //        mode = (mode == MODE_BITMAP) ? MODE_STROKE : MODE_BITMAP;
-    //        font_index = 0;
-    //        glutPostRedisplay();
-    //        break;
+        //    case ' ':    /* Space - toggles mode.     */
+        //        mode = (mode == MODE_BITMAP) ? MODE_STROKE : MODE_BITMAP;
+        //        font_index = 0;
+        //        glutPostRedisplay();
+        //        break;
 
-    //    case '1':
-    //    case '2':
-    //    case '3':
-    //    case '4':
-    //    case '5':
-    //    case '6':
-    //    case '7':
-    //        if (mode == MODE_BITMAP || key == '1' || key == '2') {
-    //            font_index = key - '1';
-    //        }
-    //        glutPostRedisplay();
-    //        break;
-    //    }
-    //    glutPostRedisplay(); //--- 배경색이 바뀔때마다 출력 콜백함수를 호출하여 화면을 refresh 한다
-    //}
-    //else {
-    //    if (key == 'r' || key == 'R') {
-    //        if (gameover)
-    //            restart();
-    //    }
+        //    case '1':
+        //    case '2':
+        //    case '3':
+        //    case '4':
+        //    case '5':
+        //    case '6':
+        //    case '7':
+        //        if (mode == MODE_BITMAP || key == '1' || key == '2') {
+        //            font_index = key - '1';
+        //        }
+        //        glutPostRedisplay();
+        //        break;
+        //    }
+        //    glutPostRedisplay(); //--- 배경색이 바뀔때마다 출력 콜백함수를 호출하여 화면을 refresh 한다
+        //}
+        //else {
+        //    if (key == 'r' || key == 'R') {
+        //        if (gameover)
+        //            restart();
+        //    }
     }
 }
 
-
+GLvoid KeyboardUp(unsigned char key, int x, int y) {
+    if (net.getStart()) {
+        if (key == 'w')
+            key_w_state = false;
+        if (key == 's')
+            key_s_state = false;
+        if (key == 'a')
+            key_a_state = false;
+        if (key == 'd')
+            key_d_state = false;
+    }
+}
 
 void restart() {
     net.gameover = false;

@@ -43,10 +43,6 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 			clients[server_data.id].z = server_data.z;
 			break;
 		}
-		//for (int i = 0; i < 3; ++i) {
-			//cout << i << " - " << clients[i].x << endl;
-	//	}
-
 		break;
 	case GAME_START:   // 게임 시작
 		m_start = true;
@@ -65,8 +61,6 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 
 DWORD WINAPI C_SAVE_PACKET(LPVOID arg)
 {
-	//SOCKET sock = (SOCKET)arg;
-	//Network network;
 	SERVER_DATA server_data;
 	Network* network = (Network*)arg;
 	SOCKET sock = network->getSock();
@@ -91,7 +85,6 @@ void Network::network()
 		exit(-1);
 
 	m_sock = socket(AF_INET, SOCK_STREAM, 0);
-	//SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (INVALID_SOCKET == m_sock)
 		cout << "socket 에러" << endl;
 
@@ -105,25 +98,9 @@ void Network::network()
 		cout << "connect 에러" << endl;
 
 	m_hThread = CreateThread(NULL, 0, C_SAVE_PACKET, (LPVOID)this, NULL, NULL);
-	
-	//while (true) {
-		//CLIENT_DATA clientData;
-		//clientData.id = 23;
-		//clientData.type = MOVE_RIGHT;
-
-		//// 고정 길이
-		//retval = send(sock, (char*)&clientData, sizeof(CLIENT_DATA), 0);
-		//if (SOCKET_ERROR == retval) {
-		//	cout << "send 에러" << endl;
-		//	break;
-		//}
-
-		//if (start != true)
-		//	continue;
-	//}
 }
 
-void Network::CS_MOVE(char key)
+void Network::CS_MOVE()
 {
 	CLIENT_DATA client_data;
 	client_data.id = m_id;
@@ -147,26 +124,4 @@ void Network::CS_MOVE(char key)
 		client_data.type = MOVE_RIGHT;
 		send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);
 	}
-
-
-	/*switch (key) {
-	case 'w':
-	case 'W':
-		client_data.type = MOVE_FRONT;
-		break;
-	case 's':
-	case 'S':
-		client_data.type = MOVE_BACK;
-		break;
-	case 'a':
-	case 'A':
-		client_data.type = MOVE_LEFT;
-		break;
-	case 'd':
-	case 'D':
-		client_data.type = MOVE_RIGHT;
-		break;
-	}
-
-	send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);*/
 }
