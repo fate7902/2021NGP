@@ -173,7 +173,11 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
     net.objects[0].z = 0;
     net.objects[1].z = 0;
-    net.objects[2].z = -20;
+    net.objects[2].z = -999;
+    net.objects[3].z = -999;
+    net.objects[4].z = -999;
+    net.objects[5].z = -999;
+
 
     /*net.objects[0].z = -10;
     net.objects[1].z = 10;
@@ -245,9 +249,10 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
         //--------------------------------------
         //뷰
+        //카메라이동추가 
         glm::vec3 cameraPos(1.0f);
         if (!(map2))
-            cameraPos = glm::vec3((10.0f + transz) * sin(glm::radians(setac)), 8.0f, (11.0f + transz + 3.0f) * cos(glm::radians(setac)) + pointz);
+            cameraPos = glm::vec3((10.0f + narutoCoord[net.getMyId()].z) * sin(glm::radians(setac)), 8.0f, (11.0f + narutoCoord[net.getMyId()].z + 3.0f) * cos(glm::radians(setac)) + pointz);
         else
             cameraPos = glm::vec3(narutoCoord[net.getMyId()].x - 11.0f, 5.0f, -11.5 * 6 - 2.5f - 5.5f);
         glm::vec4 ang(0.0f, 0.0f, 0.0f, 0.0f);
@@ -264,13 +269,14 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
         glm::vec3 cameraDirection(1.0f);
         if (!(map2))
-            cameraDirection = glm::vec3(ang.x, 3.0f, ang.z + pointz - 0.2f);
+            cameraDirection = glm::vec3(ang.x, 3.0f, ang.z + narutoCoord[net.getMyId()].z - 0.2f);
         else
             cameraDirection = glm::vec3(ang.x + pointx, 0.0f, -11.5 * 6 - 2.5f - 5.5f);
         glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-        viewMatrix = glm::lookAt(cameraPos, cameraDirection, cameraUp);
 
+        viewMatrix = glm::lookAt(cameraPos , cameraDirection, cameraUp);
+        
 
         //투영
         projectionMatrix = glm::perspective(glm::radians(45.0f), (float)600.0f / (float)600.0f, 0.1f, 50.0f);
@@ -298,6 +304,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
                 break;
             case BULLDOZER:
                 Object1Coord = glm::vec3(object.x, object.y, object.z);
+                break;
+            default:
                 break;
             }
         }
@@ -352,6 +360,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
                 break;
             case BULLDOZER:
                 drawObject1(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
+                break;
+            default:
                 break;
             }
         }
@@ -760,77 +770,77 @@ GLvoid ObjectTimer(int value) {
         //COLL_CHECK(narutoCoord, Object2Coord);
         //COLL_CHECK(narutoCoord, Object1Coord);
 
-        num = rand() % 3 + 1; //1~3 
+        //num = rand() % 3 + 1; //1~3 
 
-        if (set_Object1 == false && O1_pointz != M_pointz - 2.0f) {
-            switch (num)
-            {
-            case 1:
-                set_Object1 = true;
-                O1_pointx = M_pointx - 8;
-                left_Object = true;
-                break;
-            case 2:
-                set_Object1 = true;
-                O1_pointx = M_pointx - 2;
-                mid_Object = true;
-                break;
-            case 3:
-                set_Object1 = true;
-                O1_pointx = M_pointx + 4;
-                right_Object = true;
-                break;
-            }
+        //if (set_Object1 == false && O1_pointz != M_pointz - 2.0f) {
+        //    switch (num)
+        //    {
+        //    case 1:
+        //        set_Object1 = true;
+        //        O1_pointx = M_pointx - 8;
+        //        left_Object = true;
+        //        break;
+        //    case 2:
+        //        set_Object1 = true;
+        //        O1_pointx = M_pointx - 2;
+        //        mid_Object = true;
+        //        break;
+        //    case 3:
+        //        set_Object1 = true;
+        //        O1_pointx = M_pointx + 4;
+        //        right_Object = true;
+        //        break;
+        //    }
 
-        }
-        if (set_Object2 == false && O2_pointz != M_pointz - 2.0f) {
-            num2 = rand() % 2 + 1;
-            if (left_Object == true) {
-                switch (num2)
-                {
-                case 1:
-                    set_Object2 = true;
-                    O2_pointx = M_pointx + 3;
-                    mid_Object = true;
-                    break;
-                case 2:
-                    set_Object2 = true;
-                    O2_pointx = M_pointx + 7;
-                    right_Object = true;
-                    break;
-                }
-            }
-            else if (mid_Object == true) {
-                switch (num2)
-                {
-                case 1:
-                    set_Object2 = true;
-                    O2_pointx = M_pointx - 4;
-                    left_Object = true;
-                    break;
-                case 2:
-                    set_Object2 = true;
-                    O2_pointx = M_pointx + 7;
-                    right_Object = true;
-                    break;
-                }
-            }
-            else if (right_Object == true) {
-                switch (num2)
-                {
-                case 1:
-                    set_Object2 = true;
-                    O2_pointx = M_pointx - 4;
-                    left_Object = true;
-                    break;
-                case 2:
-                    set_Object2 = true;
-                    O2_pointx = M_pointx + 3;
-                    mid_Object = true;
-                    break;
-                }
-            }
-        }
+        //}
+        //if (set_Object2 == false && O2_pointz != M_pointz - 2.0f) {
+        //    num2 = rand() % 2 + 1;
+        //    if (left_Object == true) {
+        //        switch (num2)
+        //        {
+        //        case 1:
+        //            set_Object2 = true;
+        //            O2_pointx = M_pointx + 3;
+        //            mid_Object = true;
+        //            break;
+        //        case 2:
+        //            set_Object2 = true;
+        //            O2_pointx = M_pointx + 7;
+        //            right_Object = true;
+        //            break;
+        //        }
+        //    }
+        //    else if (mid_Object == true) {
+        //        switch (num2)
+        //        {
+        //        case 1:
+        //            set_Object2 = true;
+        //            O2_pointx = M_pointx - 4;
+        //            left_Object = true;
+        //            break;
+        //        case 2:
+        //            set_Object2 = true;
+        //            O2_pointx = M_pointx + 7;
+        //            right_Object = true;
+        //            break;
+        //        }
+        //    }
+        //    else if (right_Object == true) {
+        //        switch (num2)
+        //        {
+        //        case 1:
+        //            set_Object2 = true;
+        //            O2_pointx = M_pointx - 4;
+        //            left_Object = true;
+        //            break;
+        //        case 2:
+        //            set_Object2 = true;
+        //            O2_pointx = M_pointx + 3;
+        //            mid_Object = true;
+        //            break;
+        //        }
+        //    }
+        //}
         glutTimerFunc(1, ObjectTimer, value); // 타이머함수 재 설정
     }
 }
@@ -899,7 +909,7 @@ GLvoid TimerFunction(int value) {
 
 
         // 몬스터 이동 
-        M_pointz -= 0.3f;
+       // M_pointz -= 0.3f;
         if (M_boolt) {  //다리 회전 
             M_setat += setatspeed;
             if (M_setat >= 60.0f) {
@@ -964,11 +974,11 @@ GLvoid TimerFunction(int value) {
         }
 
     
-        if (net.gameover == false && transj < -5) {      // 아래로 떨어졌을 때,사망 사운드
+       // if (net.gameover == false && transj < -5) {      // 아래로 떨어졌을 때,사망 사운드
             //glEnd();
-            sound5();
-            net.gameover = true;
-        }
+           // sound5();
+         //   net.gameover = true;
+       // }
 
 
      

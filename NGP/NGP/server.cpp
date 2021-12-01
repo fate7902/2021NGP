@@ -17,11 +17,12 @@ using namespace std;
 #define INITPOSX 0
 #define INITPOSY 0
 #define INITPOSZ 0
-#define USERSIZE 2
-#define OBJECTSIZE 2
+#define USERSIZE 0.5
+#define OBJECTSIZE 1.5
+#define OBJECTSIZE2 0.5
 #define GOALPOSZ -1000
 #define COUNTDOWN 10
-#define OBJECTPOSX 4
+#define OBJECTPOSX 5
 
 //queue<CLIENT_DATA*> recvQueue;
 //mutex recvLock;
@@ -119,38 +120,88 @@ void GOAL_CHECK(CLIENT_INFO clientInfo)
 
 void COLL_CHECK(CLIENT_INFO clientInfo)
 {
-	float client_minX = clientInfo.x - USERSIZE;
-	float client_minY = clientInfo.y - USERSIZE;
-	float client_minZ = clientInfo.z - USERSIZE;
-	for (const auto& objects : objectInfo) {
-		float objects_minX = objects.x - OBJECTSIZE;
-		float objects_maxX = objects.x + OBJECTSIZE;
-		float objects_minY = objects.y - OBJECTSIZE;
-		float objects_maxY = objects.y + OBJECTSIZE;
-		float objects_minZ = objects.z - OBJECTSIZE;
-		float objects_maxZ = objects.z + OBJECTSIZE;
-		if (client_minX > objects_minX && client_minX < objects_maxX &&
-			client_minY > objects_minY && client_minY < objects_maxY &&
-			client_minZ > objects_minZ && client_minZ < objects_maxZ) {
-			SERVER_DATA server_data;
-			server_data.dataType = GAME_OVER;
-			send(clientInfo.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-			/* GAME_OVER된 유저 정보 바꾸기 - 서버에서 */
-			clientInfo.alive = false;
-		}
-	}
+	//float client_minX = clientInfo.x - USERSIZE;
+	//float client_minY = clientInfo.y - USERSIZE;
+	//float client_minZ = clientInfo.z - USERSIZE;
+	//for (const auto& objects : objectInfo) {
+	//	float objects_minX = objects.x - OBJECTSIZE;
+	//	float objects_maxX = objects.x + OBJECTSIZE;
+	//	float objects_minY = objects.y - OBJECTSIZE;
+	//	float objects_maxY = objects.y + OBJECTSIZE;
+	//	float objects_minZ = objects.z - OBJECTSIZE;
+	//	float objects_maxZ = objects.z + OBJECTSIZE;
+	//	if (client_minX > objects_minX && client_minX < objects_maxX &&
+	//		client_minY > objects_minY && client_minY < objects_maxY &&
+	//		client_minZ > objects_minZ && client_minZ < objects_maxZ) {
+	//		SERVER_DATA server_data;
+	//		server_data.dataType = GAME_OVER;
+	//		send(clientInfo.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+	//		/* GAME_OVER된 유저 정보 바꾸기 - 서버에서 */
+	//		clientInfo.alive = false;
+	//	}
+	//}
 }
-
 void COLL_CHECK(OBJECT_INFO objectInfo)
 {
-	if (objectInfo.id == 1) {
+
+	if (objectInfo.id == 1) {                   //뒤에서 오는 장애물과는 충돌 ok
 		if (objectInfo.z <= clientInfo[0].z) {
 			SERVER_DATA server_data;
 			server_data.dataType = GAME_OVER;
 			send(clientInfo[0].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+			cout << "트래커 충돌" << endl;
 
 		}
 	}
+	else if (objectInfo.id  != 0 && objectInfo.id != 1) {
+		if (true == clientInfo[0].alive && objectInfo.objectType != NULL) {
+			cout << "id" << objectInfo.id <<": "<<  objectInfo.x - OBJECTSIZE << " " << objectInfo.x + OBJECTSIZE << endl;
+	
+			if ((clientInfo[0].x - USERSIZE < objectInfo.x - OBJECTSIZE < clientInfo[0].x + USERSIZE) &&
+				(objectInfo.x - OBJECTSIZE < clientInfo[0].x + USERSIZE < objectInfo.x + OBJECTSIZE) &&
+				 (objectInfo.z - OBJECTSIZE2 <= clientInfo[0].z - USERSIZE <= objectInfo.z + OBJECTSIZE2)) {
+				cout << "충돌1" << endl;
+				cout << "오브젝트 id: " << objectInfo.id << endl;
+				cout << "클라x: " << clientInfo[0].x << ", " << clientInfo[0].x - USERSIZE << endl;
+				cout << "장애물 x : " << objectInfo.x << endl;
+				cout << "클라z: " << clientInfo[0].z << "  장애물 z: " << objectInfo.z << endl;
+		
+				SERVER_DATA server_data;
+				server_data.dataType = GAME_OVER;
+				send(clientInfo[0].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+				clientInfo[0].alive = false;
+
+			}
+			else if ((objectInfo.x - OBJECTSIZE <= clientInfo[0].x - USERSIZE <= objectInfo.x + OBJECTSIZE) && objectInfo.z - OBJECTSIZE2 <= clientInfo[0].z - USERSIZE <= objectInfo.z + OBJECTSIZE2) {
+				cout << "충돌2" << endl;
+				cout << "오브젝트 id: " << objectInfo.id << endl;
+				cout << "클라x: " << clientInfo[0].x << "  장애물 x: " << objectInfo.x << endl;
+				cout << "클라z: " << clientInfo[0].z << "  장애물 z: " << objectInfo.z << endl;
+			
+				SERVER_DATA server_data;
+				server_data.dataType = GAME_OVER;
+				send(clientInfo[0].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+				clientInfo[0].alive = false;
+
+			}
+			else if ((clientInfo[0].x - USERSIZE < objectInfo.x + OBJECTSIZE < clientInfo[0].x + USERSIZE) &&
+				   (objectInfo.x - OBJECTSIZE < clientInfo[0].x - USERSIZE < objectInfo.x + OBJECTSIZE) &&
+				(objectInfo.z - OBJECTSIZE2 <= clientInfo[0].z - USERSIZE <= objectInfo.z + OBJECTSIZE2) ){
+				cout << "충돌3" << endl;
+				cout << "오브젝트 id: " << objectInfo.id << endl;
+				cout << "클라x: " << clientInfo[0].x << "  장애물 x: " << objectInfo.x << endl;
+				cout << "클라z: " << clientInfo[0].z << "  장애물 z: " << objectInfo.z << endl;
+		
+				SERVER_DATA server_data;
+				server_data.dataType = GAME_OVER;
+				send(clientInfo[0].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+				clientInfo[0].alive = false;
+
+			}
+		}
+
+		}
+	
 	//float object_minX = objectInfo.x - OBJECTSIZE;	
 	//float object_minY = objectInfo.y - OBJECTSIZE;	
 	//float object_minZ = objectInfo.z - OBJECTSIZE;	
@@ -177,9 +228,11 @@ void COLL_CHECK(OBJECT_INFO objectInfo)
 bool RESET_OBJECT(OBJECT_INFO object)
 {
 	if (objectInfo[1].z < object.z && true == object.moving) {
-		cout << "트래커 z - " << objectInfo[1].z << ",   장애물 z - " << object.z << endl;
+		//cout << "트래커 z - " << objectInfo[1].z << ",   장애물 z - " << object.z << endl;
+		//cout << "리셋" << endl;
 		return true;
 	}
+
 	return false;
 }
 
@@ -212,7 +265,7 @@ void SC_SEND(CLIENT_DATA clientData)
 
 	for (const auto& clients : clientInfo)
 		send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-	
+	cout << clientInfo[id].z << endl;
 	// 위에 이동시킨 유저 결승점 통과여부 판단
 	GOAL_CHECK(clientInfo[id]);
 	
@@ -287,6 +340,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 	auto start_w = INFINITE;
 	auto end_w = INFINITE;
 	int firstline = 0;
+	int firstline2 = 0;
 	int secondline = 0;
 	SERVER_DATA server_data;
 	server_data.dataType = LOCATION;
@@ -307,46 +361,85 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 						case 0:	// BOSS
 							objects.objectType = BOSS;
 							objects.z -= 0.2;
+							
 							//cout << "fsdfs\n";
 							break;
 						case 1:	// TRACKER
 							objects.objectType = TRACKER;
-							objects.z -= 0.2;
-							cout << "트래커 - " << objects.z << endl;
+						//	objects.z -= 0.2;
+							//cout << "트래커 - " << objects.z << endl;
 							break;
 						default:
 							if (objects.objectType == NULL) {
-								if (2 == objects.id || 3 == objects.id) {
-									if (2 == objects.id) {
+								if (2 == objects.id /*|| 3 == objects.id*/) {
+									if (2 == objects.id ) {   // id:2 먼저 라인 정하기 
 										start = clock();
 										firstline = IntUid(dre);
 									}
+									else 
+										firstline2 = IntUid(dre);
 									switch (firstline)
 									{
 									case 1:
-										objects.line = objects.id;
-										objects.x = OBJECTPOSX * (objects.id - 2);
-										break;
-									case 2:
-										if (2 == objects.id) {
+										if (objects.id == 2) {
 											objects.line = 1;
-											objects.x = -OBJECTPOSX;
+											objects.x = -6.0f;
+										}
+										if (firstline2 == 1 && objects.id == 3) {
+											objects.line = 2;
+											objects.x = 0.0f;
+										}
+										else if ((firstline2 == 2 || firstline2 == 3) && objects.id == 3) {
+											objects.line = 3;
+											objects.x = 6.0f;
+										}
+										//objects.line = objects.id;
+										//objects.x = OBJECTPOSX * (objects.id - 2);
+										break;
+									case 2:		
+										if (objects.id == 2) {
+											objects.line = 2;
+											objects.x = 0.0f;
+										}
+										if (firstline2 == 1 && objects.id == 3) {
+											objects.line = 1;
+											objects.x = -6.0f;
+										}
+										else if ((firstline2 == 2 || firstline2 == 3) && objects.id == 3) {
+											objects.line = 3;
+											objects.x = 6.0f;
+										}
+										/*if (2 == objects.id) {
+											objects.line = 1;
+											objects.x -= OBJECTPOSX;
 										}
 										else {
 											objects.line = objects.id;
 											objects.x = OBJECTPOSX;
-										}
+										}*/
 										break;
 									case 3:
-										objects.line = objects.id - 1;
-										objects.x = -OBJECTPOSX * (3 - objects.id);
+										if (objects.id == 2) {
+										objects.line = 3;
+										objects.x = 6.0f;
+										}
+										if (firstline2 == 1 && objects.id == 3) {
+											objects.line =1;
+											objects.x = -6.0f;
+										}
+										else if ((firstline2 == 2 || firstline2 == 3) && objects.id == 3) {
+											objects.line = 2;
+											objects.x = 0.0f;
+										}
+										//objects.line = objects.id - 1;
+										//objects.x -= OBJECTPOSX * (3 - objects.id);
 										break;
 									}
-									objects.z = objectInfo[0].z - 3;
-									objects.objectType = uid(dre);
+									objects.z = objectInfo[0].z - 3;        //장애물 종류 정함 
+									objects.objectType = BULLDOZER;
 									objects.moving = true;
 								}
-								else {
+							/*	else {
 									if (4 == objects.id && false == objects.moving) {
 										end = clock();
 										if (end - start >= MOVEDELAY) {
@@ -363,7 +456,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 										case 2:
 											if (4 == objects.id) {
 												objects.line = 1;
-												objects.x = -OBJECTPOSX;
+												objects.x -= OBJECTPOSX;
 											}
 											else {
 												objects.line = 3;
@@ -372,29 +465,31 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 											break;
 										case 3:
 											objects.line = objects.id - 3;
-											objects.x = -OBJECTPOSX * (5 - objects.id);
+											objects.x -= OBJECTPOSX * (5 - objects.id);
 											break;
 										}
 										objects.z = objectInfo[0].z - 3;
 										objects.objectType = uid(dre);
 										objects.moving = true;
 									}
-								}
+								}*/
 							}
-							else {
+							else {   // 장애물 종류 다 정해지면 움직여
 								if (true == objects.moving) {
 									objects.z += 0.2;
-									cout << "장애물[" << objects.id << "] - " << ", " << objects.x << ", " << objects.z << endl;
+								//	cout << "장애물[" << objects.id << "] - " <<  " , " << objects.x << ", " << objects.z << endl;
 								}
 							}
 							break;
 						}
 						server_data.objectInfo = objects;
 
+						if (objectInfo->id != 4 && objectInfo->id != 5) {
+							for (const auto& clients : clientInfo)
+								send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+						}
 
-						for (const auto& clients : clientInfo)
-							send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-
+						
 						COLL_CHECK(objects);
 
 						if (objects.id != 0 && objects.id != 1) {
@@ -406,7 +501,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 								objects.objectType = NULL;
 								objects.x = INITPOSX;
 								objects.y = INITPOSY;
-								objects.z = objectInfo[0].z - 100;
+								objects.z = objectInfo[0].z - 9999;
 								SERVER_DATA reset_server_data;
 								reset_server_data.dataType = LOCATION;
 								reset_server_data.subDataType = OBJECT;
@@ -423,6 +518,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 	}
 }
 
+bool start = false;
 int main(int argc, char* argv[]) {
 	int retval;
 
@@ -486,7 +582,7 @@ int main(int argc, char* argv[]) {
 			SC_LOGIN(userCount++);
 
 			// 3명의 유저가 접속하면 게임 시작
-			if (clientInfo[0].alive /* && clientInfo[1].alive && clientInfo[2].alive */ ) {
+			if (clientInfo[0].alive /* && clientInfo[1].alive && clientInfo[2].alive */  ) {
 
 				for (int i = 0; i < 6; ++i)
 					objectInfo[i].id = i;
@@ -501,11 +597,12 @@ int main(int argc, char* argv[]) {
 				objectInfo[1].z = 10;			// BOSS와 20차이가 나야 한다.
 
 				for (int i = 2; i < 6; ++i) {
-					objectInfo[i].x = 0;
-					objectInfo[i].y = 0;
-					objectInfo[i].z = 30;
+					objectInfo[i].x = -9999;
+					objectInfo[i].y =  0;
+					objectInfo[i].z = -9999;
+					objectInfo[i].moving = false;
+					objectInfo[i].objectType = NULL;
 				}
-
 				SC_GAMESTART();
 			}
 		}
