@@ -128,9 +128,28 @@ void Network::CS_MOVE(char key)
 	CLIENT_DATA client_data;
 	client_data.id = m_id;
 
-	// switch -> if로 바꿔야 한다. : 동시에 누를 수 있게 ( if문 각각에 send를 해야 한다.)
+	if (GetAsyncKeyState('W')) {
+		client_data.type = MOVE_FRONT;
+		send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);
+	}
 
-	switch (key) {
+	if (GetAsyncKeyState('S')) {
+		client_data.type = MOVE_BACK;
+		send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);
+	}
+
+	if (GetAsyncKeyState('A')) {
+		client_data.type = MOVE_LEFT;
+		send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);
+	}
+
+	if (GetAsyncKeyState('D')) {
+		client_data.type = MOVE_RIGHT;
+		send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);
+	}
+
+
+	/*switch (key) {
 	case 'w':
 	case 'W':
 		client_data.type = MOVE_FRONT;
@@ -149,5 +168,5 @@ void Network::CS_MOVE(char key)
 		break;
 	}
 
-	send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);
+	send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);*/
 }
