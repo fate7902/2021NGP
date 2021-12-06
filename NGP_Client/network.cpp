@@ -55,6 +55,8 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 		setStart(false);
 		break;
 	case GAME_RESULT:
+		gameclear = true;
+		setStart(false);
 		break;
 	}
 }

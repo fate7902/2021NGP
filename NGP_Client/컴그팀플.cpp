@@ -40,7 +40,7 @@ void Mouse(int button, int state, int x, int y);
 void restart();
 Network net;
 //텍스처
-unsigned int texture1, texture2, texture3, texture4, texture5, texture6;
+unsigned int texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8, texture9;
 
 //변수의 모음
 //객체관련
@@ -232,7 +232,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
     unsigned int projectionLocation;
     unsigned int objcolorLocation;
 
-    if (!net.gameover && !gamestart && !gameclear) {
+    if (!net.gameover && !gamestart && !net.gameclear) {
         glDisable(GL_DEPTH_TEST);
         //배경-------------------------------
         glUseProgram(s_program[3]);
@@ -440,8 +440,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
     }
 
-    if (gameclear) {
-        if (perfectclear) {
+    if (net.gameclear) {
+    
             glUseProgram(s_program[3]);
             viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
             transformMatrix = glm::mat4(1.0f);
@@ -460,27 +460,27 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture5);
             glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
+        
 
-        //startbutton
-        glUseProgram(s_program[4]);
-        viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        transformMatrix = glm::mat4(1.0f);
-        transformLocation = glGetUniformLocation(s_program[4], "transform");
-        glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-        viewLocation = glGetUniformLocation(s_program[4], "viewTransform");
-        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-        projectionMatrix = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
-        projectionLocation = glGetUniformLocation(s_program[4], "projectionTransform");
-        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-        objColor = glm::vec3(-1.0f, 1.0f, 1.0f);
-        objcolorLocation = glGetUniformLocation(s_program[4], "objectColor");
-        glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
+        ////startbutton
+        //glUseProgram(s_program[4]);
+        //viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        //transformMatrix = glm::mat4(1.0f);
+        //transformLocation = glGetUniformLocation(s_program[4], "transform");
+        //glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
+        //viewLocation = glGetUniformLocation(s_program[4], "viewTransform");
+        //glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
+        //projectionMatrix = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
+        //projectionLocation = glGetUniformLocation(s_program[4], "projectionTransform");
+        //glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
+        //objColor = glm::vec3(-1.0f, 1.0f, 1.0f);
+        //objcolorLocation = glGetUniformLocation(s_program[4], "objectColor");
+        //glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
 
-        glBindVertexArray(vao[4]);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture6);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        //glBindVertexArray(vao[4]);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, texture6);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
     draw_stuff();  //텍스트
@@ -756,6 +756,23 @@ void InitTexture() {
     tLocation = glGetUniformLocation(s_program[4], "texture"); //--- outTexture 유니폼 샘플러의 위치를 가져옴
     glUniform1i(tLocation, 6);
     stbi_image_free(data);
+
+
+    //--- texture 7
+    glGenTextures(1, &texture7);
+    glBindTexture(GL_TEXTURE_2D, texture7);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_set_flip_vertically_on_load(true);
+    data = stbi_load("1st.png", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glUseProgram(s_program[3]);
+    tLocation = glGetUniformLocation(s_program[3], "texture"); //--- outTexture 유니폼 샘플러의 위치를 가져옴
+    glUniform1i(tLocation, 6);
+    stbi_image_free(data);
+}
 }
 
 void Mouse(int button, int state, int x, int y)
@@ -1137,7 +1154,7 @@ void restart() {
     boold = false;
     boolj = false;
     boolj2 = false;
-    gameclear = false;
+    net.gameclear = false;
     sound_6 = true;
     //주인공이동(x,y,z순)
     transj = 0.0f;

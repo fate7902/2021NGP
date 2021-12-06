@@ -32,7 +32,6 @@ bool boolgravity = false;
 bool boold = false;
 bool boolj = false;
 bool boolj2 = false;
-bool gameclear = false;
 bool sound_6 = true;
 bool sound_7 = true;
 //주인공이동(x,y,z순)
