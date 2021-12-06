@@ -773,7 +773,7 @@ void InitTexture() {
     glUniform1i(tLocation, 6);
     stbi_image_free(data);
 }
-}
+
 
 void Mouse(int button, int state, int x, int y)
 {

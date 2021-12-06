@@ -92,6 +92,7 @@ void SC_LOGIN(int id)
 						other_server_data.y = clientInfo[other.id].y;
 						other_server_data.z = clientInfo[other.id].z;
 						send(clients.sock, (char*)&other_server_data, sizeof(SERVER_DATA), 0);
+
 					}
 				}
 			}

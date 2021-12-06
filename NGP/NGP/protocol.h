@@ -1,8 +1,8 @@
 #pragma once
-
-#define SERVERIP "192.168.35.11"
+//192.168.35.11:59960  //13.94.47.61:9354
+#define SERVERIP "192.168.35.7"
 #define BUFSIZE 512
-constexpr int SERVERPORT = 9009;
+constexpr int SERVERPORT = 9000;
 
 // CLIENT DATA TYPE
 constexpr unsigned char MOVE_FRONT	=	0x01;
