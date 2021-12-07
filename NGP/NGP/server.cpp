@@ -20,7 +20,7 @@ using namespace std;
 #define USERSIZE 0.5
 #define OBJECTSIZE 1.5
 #define OBJECTSIZE2 0.5
-#define GOALPOSZ -1000
+#define GOALPOSZ -500
 #define COUNTDOWN 10
 #define OBJECTPOSX 5
 
@@ -92,6 +92,7 @@ void SC_LOGIN(int id)
 						other_server_data.y = clientInfo[other.id].y;
 						other_server_data.z = clientInfo[other.id].z;
 						send(clients.sock, (char*)&other_server_data, sizeof(SERVER_DATA), 0);
+
 					}
 				}
 			}
@@ -106,12 +107,14 @@ void SC_LOGIN(int id)
 /* 의범 -  Goal_Check()와 Coll_check() 작성하기 */
 void GOAL_CHECK(CLIENT_INFO clientInfo)
 {
-	if (clientInfo.z <= GOALPOSZ) {
+	if (clientInfo.z <= -60) {
 		SERVER_DATA server_data;
 		server_data.dataType = GAME_RESULT;
 		server_data.mission_result = true;		
 		send(clientInfo.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+
 		/* 도착한 유저 정보 바꾸기 - 서버에서 */
+
 		clientInfo.alive = false;		
 		/* 남은시간 10초로 바꾸기 - 서버에서 */
 		goal = true;

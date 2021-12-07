@@ -55,12 +55,15 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 		setStart(false);
 		break;
 	case GAME_RESULT:
+		gameclear = true;
+		setStart(false);
 		break;
 	}
 }
 
 DWORD WINAPI C_SAVE_PACKET(LPVOID arg)
 {
+
 	SERVER_DATA server_data;
 	Network* network = (Network*)arg;
 	SOCKET sock = network->getSock();
@@ -98,6 +101,7 @@ void Network::network()
 		cout << "connect ¿¡·¯" << endl;
 
 	m_hThread = CreateThread(NULL, 0, C_SAVE_PACKET, (LPVOID)this, NULL, NULL);
+
 }
 
 void Network::CS_MOVE()

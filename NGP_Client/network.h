@@ -31,4 +31,5 @@ public:
 	void setStart(bool end) { m_start = end; }
 	SOCKET getSock() { return m_sock; }
 	bool gameover = false;
+	bool gameclear = false;
 };
