@@ -48,7 +48,7 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 		m_start = true;
 		break;
 	case TIME: // ½Ã°£
-		m_game_time = server_data.time;
+		game_time = server_data.time;
 		break;
 	case GAME_OVER:
 		gameover = true;

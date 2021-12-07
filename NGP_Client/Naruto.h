@@ -49,7 +49,7 @@ float setaLefthand = 60.0f;
 
 bool map2 = false;
 
-void drawNaruto(GLuint program, int vertexCount, GLuint vao[], GLuint vbo[],glm::mat4 viewMatrix, glm::mat4 projectionMatrix, int id) {
+void drawNaruto(Network network, GLuint program, int vertexCount, GLuint vao[], GLuint vbo[],glm::mat4 viewMatrix, glm::mat4 projectionMatrix, int id) {
     //for (const auto& client : net.clients) {
           
 
@@ -98,7 +98,10 @@ void drawNaruto(GLuint program, int vertexCount, GLuint vao[], GLuint vbo[],glm:
         transformMatrix = transMatrixpoint * transformMatrix;      //몸통의 이동
         transformMatrix = charTerrace * transformMatrix;      //난간위로 이동
 
-        objColor = glm::vec3(1.0f, 0.2f, 0.2f);
+        if (id == network.getMyId())
+            objColor = glm::vec3(0.0, 1.0f, 0.0f);
+        else
+            objColor = glm::vec3(1.0f, 0.0f, 0.0f);
 
         transformLocation = glGetUniformLocation(program, "transform");
         glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));

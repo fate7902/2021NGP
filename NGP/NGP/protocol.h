@@ -1,6 +1,6 @@
 #pragma once
 //192.168.35.11:59960  //13.94.47.61:9354
-#define SERVERIP "192.168.35.7"
+#define SERVERIP "192.168.123.10"
 #define BUFSIZE 512
 constexpr int SERVERPORT = 9000;
 

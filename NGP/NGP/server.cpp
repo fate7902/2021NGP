@@ -33,9 +33,8 @@ OBJECT_INFO objectInfo[6];
 bool gameStart = false;
 bool goal = false;
 /* 의범 - 이동시 이동 크기 설정하기(변수 타입 변경 가능) */
-float dx = 0.2;
-//short dy = 1;
-float dz = 0.2;
+float dx = 0.05;
+float dz = 0.05;
 
 default_random_engine dre{ random_device{}() };
 uniform_int_distribution<> uid{BALL, BULLDOZER};

@@ -15,7 +15,7 @@ class Network {
 	bool m_start = false;
 	HANDLE m_hThread;
 	int m_id;
-	int m_game_time;
+
 
 	SOCKET m_sock;
 public:
@@ -32,4 +32,5 @@ public:
 	SOCKET getSock() { return m_sock; }
 	bool gameover = false;
 	bool gameclear = false;
+	int game_time;
 };

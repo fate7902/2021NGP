@@ -39,6 +39,7 @@ void Mouse(int button, int state, int x, int y);
 
 void restart();
 Network net;
+
 //텍스처
 unsigned int texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8, texture9;
 
@@ -199,8 +200,11 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     glutMainLoop();
 }
 
+
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
+    g_time = net.game_time;
+
     if (key_w_state || key_s_state || key_a_state || key_d_state) {
         net.CS_MOVE();
     }
@@ -349,7 +353,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         //바디
         for (const auto& client : net.clients) {
             if (client.alive) {
-                drawNaruto(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix, client.id);
+                drawNaruto(net, s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix, client.id);
             }
         }
 
