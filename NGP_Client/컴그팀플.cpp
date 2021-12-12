@@ -14,7 +14,6 @@
 #include  <string.h>
 #include "text.h"
 #include "network.h"
-#include <time.h>
 #include "goalline.h"
 
 #include "..\NGP\NGP\protocol.h"
@@ -199,6 +198,8 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 
     glutReshapeFunc(reshape);
+
+    net.m_time_start = clock();
     glutKeyboardFunc(Keyboard);
     glutKeyboardUpFunc(KeyboardUp);
 
@@ -218,6 +219,13 @@ int time_end;
 
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
+    net.m_time_end = clock();
+    auto delay = net.m_time_end - net.m_time_start;
+    while (delay < 15) {
+        delay = 15;
+        Sleep(delay);      // 0.03초에 한번씩  -> 대락 30프레임
+    }
+
     g_time = net.game_time;
     if (net.gameclear || net.gameover) {
         key_w_state = false;
@@ -227,18 +235,18 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
     }
 
     if (key_w_state || key_s_state || key_a_state || key_d_state) {
-        if (time_start == -100) {
-            time_start = clock();
-            time_end = clock();
-        }
+        //if (time_start == -100) {
+        //    time_start = clock();
+        //    time_end = clock();
+        //}
 
-        if (time_end - time_start > 5) {
-            time_start = -100;
-            net.CS_MOVE();
-        }
-
-        else
-            time_end = clock();
+        //if (time_end - time_start > 5) {
+        //    time_start = -100;
+        //    net.CS_MOVE();
+        //}
+        net.CS_MOVE();
+        /*else
+            time_end = clock();*/
     }
 
     //--- 변경된 배경색 설정
@@ -521,8 +529,11 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
     draw_stuff();  //텍스트
 
+
     glutSwapBuffers(); // 화면에 출력하기
     glutPostRedisplay();
+
+    net.m_time_start = clock();
 }
 
 GLvoid reshape(int w, int h) {

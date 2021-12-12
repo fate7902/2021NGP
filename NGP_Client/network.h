@@ -4,6 +4,7 @@
 #pragma comment(lib,"ws2_32")
 #include <WinSock2.h>
 #include <iostream>
+#include <time.h>
 #include "..\NGP\NGP\protocol.h"
 
 using namespace std;
@@ -33,4 +34,7 @@ public:
 	bool gameover = false;
 	bool gameclear = false;
 	int game_time;
+
+	int m_time_start;
+	int m_time_end;
 };

@@ -37,6 +37,9 @@ int die_cnt;
 float dx = 0.12;
 float dz = 0.12;
 
+int g_start;
+int g_end;
+
 default_random_engine dre{ random_device{}() };
 uniform_int_distribution<> uid{ BALL, BULLDOZER };
 uniform_int_distribution<int> IntUid{ 1, 3 };
@@ -445,9 +448,16 @@ DWORD WINAPI S_RECV_PACKET(LPVOID arg)
         //recvLock.lock();
         //recvQueue.emplace(clientData);
         //recvLock.unlock();
-
+        //g_end = clock();
+        //auto delay = g_end - g_start;
+        //while (delay < 15) {
+        //    delay = 15;
+        //    Sleep(delay);
+        //}
+        // 
         // 큐 미사용시 - 받은 데이터 적용 후 send()
         SC_SEND(clientData);
+        g_start = clock();
     }
     closesocket(client_sock);
     return 0;
@@ -650,7 +660,10 @@ int main(int argc, char* argv[]) {
             cout << "연결수락에러" << endl;
             break;
         }
+
+        g_start = clock();
         hThread = CreateThread(NULL, 0, S_RECV_PACKET, (LPVOID)client_sock, 0, NULL);
+
         if (NULL == hThread)
             closesocket(client_sock);
         else
