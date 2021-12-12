@@ -16,10 +16,7 @@
 
 
 //ºÒµµÀú
-
-
 float B_pointx = 2.25f;
-float B_pointz = 0.0f;
 
 glm::vec3 BehindCoord(2.25f, 0.0f, 0.0f);
 

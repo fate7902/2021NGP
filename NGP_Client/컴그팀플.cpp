@@ -14,6 +14,8 @@
 #include  <string.h>
 #include "text.h"
 #include "network.h"
+#include <time.h>
+#include "goalline.h"
 
 #include "..\NGP\NGP\protocol.h"
 using namespace std;
@@ -32,7 +34,6 @@ void InitShader();      //프로그램 만드는 함수
 void InitTexture();     //텍스쳐 함수
 char* filetobuf(char* file);   //쉐이더를 사용하기 위해 파일을 가져오는 함수
 GLvoid TimerFunction(int value);
-GLvoid ObjectTimer(int value);
 GLvoid Keyboard(unsigned char key, int x, int y);
 GLvoid KeyboardUp(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
@@ -147,13 +148,22 @@ void COLL_CHECK(glm::vec3 user, glm::vec3 obj)
     }
 }
 
-
 bool state = true;
+void GameEnd()
+{
+    if (net.getMyId() < 3) {
+        CLIENT_DATA client_data;
+        client_data.id = net.getMyId();
+        client_data.type = LOGOUT;
+        send(net.getSock(), (char*)&client_data, sizeof(client_data), 0);
+    }
+    
+}
 
 //함수들 작성의 시작
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
-    sound2();
+    //sound2();
     //--- 윈도우 생성하기
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
@@ -187,7 +197,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     net.objects[4].z = -999;
     net.objects[5].z = -999;
 
-    glutDisplayFunc(drawScene);
+
     glutReshapeFunc(reshape);
     glutKeyboardFunc(Keyboard);
     glutKeyboardUpFunc(KeyboardUp);
@@ -195,19 +205,42 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     glutMouseFunc(Mouse);
 
     glutTimerFunc(timer2, TimerFunction, 0);
-    //glutTimerFunc(3000, ObjectTimer, 0);  //1초
 
+    glutCloseFunc(GameEnd);
+    atexit(GameEnd);
+
+    glutDisplayFunc(drawScene);
     glutMainLoop();
 }
 
+int time_start = -100;
+int time_end;
 
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
     g_time = net.game_time;
+    if (net.gameclear || net.gameover) {
+        key_w_state = false;
+        key_s_state = false;
+        key_a_state = false;
+        key_d_state = false;
+    }
 
     if (key_w_state || key_s_state || key_a_state || key_d_state) {
-        net.CS_MOVE();
+        if (time_start == -100) {
+            time_start = clock();
+            time_end = clock();
+        }
+
+        if (time_end - time_start > 5) {
+            time_start = -100;
+            net.CS_MOVE();
+        }
+
+        else
+            time_end = clock();
     }
+
     //--- 변경된 배경색 설정
     glClearColor(1.0, 1.0, 1.0, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -379,27 +412,28 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
         //건물그리기
         drawMap(s_program[2], vertexCount, vao, viewMatrix, projectionMatrix);
+        drawGoalLine(s_program[1], vertexCount, vao, vbo, viewMatrix, projectionMatrix);
     }
 
     if (gamestart) {
-        glUseProgram(s_program[3]);
-        viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        transformMatrix = glm::mat4(1.0f);
-        transformLocation = glGetUniformLocation(s_program[3], "transform");
-        glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-        viewLocation = glGetUniformLocation(s_program[3], "viewTransform");
-        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-        projectionMatrix = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
-        projectionLocation = glGetUniformLocation(s_program[3], "projectionTransform");
-        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-        objColor = glm::vec3(-1.0f, 1.0f, 1.0f);
-        objcolorLocation = glGetUniformLocation(s_program[3], "objectColor");
-        glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
+        //glUseProgram(s_program[3]);
+        //viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        //transformMatrix = glm::mat4(1.0f);
+        //transformLocation = glGetUniformLocation(s_program[3], "transform");
+        //glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
+        //viewLocation = glGetUniformLocation(s_program[3], "viewTransform");
+        //glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
+        //projectionMatrix = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
+        //projectionLocation = glGetUniformLocation(s_program[3], "projectionTransform");
+        //glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
+        //objColor = glm::vec3(-1.0f, 1.0f, 1.0f);
+        //objcolorLocation = glGetUniformLocation(s_program[3], "objectColor");
+        //glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
 
-        glBindVertexArray(vao[3]);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture3);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        //glBindVertexArray(vao[3]);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, texture3);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
 
         //startbutton
         glUseProgram(s_program[4]);
@@ -439,32 +473,30 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
         glBindVertexArray(vao[3]);
         glActiveTexture(GL_TEXTURE0);
+        
         glBindTexture(GL_TEXTURE_2D, texture2);
         glDrawArrays(GL_TRIANGLES, 0, 6);
-
     }
 
     if (net.gameclear) {
-    
-            glUseProgram(s_program[3]);
-            viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            transformMatrix = glm::mat4(1.0f);
-            transformLocation = glGetUniformLocation(s_program[3], "transform");
-            glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-            viewLocation = glGetUniformLocation(s_program[3], "viewTransform");
-            glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-            projectionMatrix = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
-            projectionLocation = glGetUniformLocation(s_program[3], "projectionTransform");
-            glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-            objColor = glm::vec3(-1.0f, 1.0f, 1.0f);
-            objcolorLocation = glGetUniformLocation(s_program[3], "objectColor");
-            glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
+        glUseProgram(s_program[3]);
+        viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        transformMatrix = glm::mat4(1.0f);
+        transformLocation = glGetUniformLocation(s_program[3], "transform");
+        glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
+        viewLocation = glGetUniformLocation(s_program[3], "viewTransform");
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
+        projectionMatrix = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
+        projectionLocation = glGetUniformLocation(s_program[3], "projectionTransform");
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
+        objColor = glm::vec3(-1.0f, 1.0f, 1.0f);
+        objcolorLocation = glGetUniformLocation(s_program[3], "objectColor");
+        glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
 
-            glBindVertexArray(vao[3]);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture5);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        
+        glBindVertexArray(vao[3]);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture5);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         ////startbutton
         //glUseProgram(s_program[4]);
@@ -785,159 +817,19 @@ void Mouse(int button, int state, int x, int y)
     mouseY = -(float)(y - (float)600 / 2.0) * (float)(1.0 / (float)(600 / 2.0));
 
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-        if (mouseX > -0.3 && mouseX < 0.3 && mouseY>-0.1 && mouseY < 0.1) {
-            gamestart = false;
-     
+        if (!net.getStart()) {
+            if (mouseX > -0.3 && mouseX < 0.3 && mouseY>-0.1 && mouseY < 0.1) {
+                gamestart = false;
+                net.gameover = false;
+                net.gameclear = false;
+                net.CS_START();
+            }
         }
     }
 }
 
-GLvoid ObjectTimer(int value) {
-
-    if (net.getStart()) {
-        //COLL_CHECK(narutoCoord, Object2Coord);
-        //COLL_CHECK(narutoCoord, Object1Coord);
-
-        //num = rand() % 3 + 1; //1~3 
-
-        //if (set_Object1 == false && O1_pointz != M_pointz - 2.0f) {
-        //    switch (num)
-        //    {
-        //    case 1:
-        //        set_Object1 = true;
-        //        O1_pointx = M_pointx - 8;
-        //        left_Object = true;
-        //        break;
-        //    case 2:
-        //        set_Object1 = true;
-        //        O1_pointx = M_pointx - 2;
-        //        mid_Object = true;
-        //        break;
-        //    case 3:
-        //        set_Object1 = true;
-        //        O1_pointx = M_pointx + 4;
-        //        right_Object = true;
-        //        break;
-        //    }
-
-        //}
-        //if (set_Object2 == false && O2_pointz != M_pointz - 2.0f) {
-        //    num2 = rand() % 2 + 1;
-        //    if (left_Object == true) {
-        //        switch (num2)
-        //        {
-        //        case 1:
-        //            set_Object2 = true;
-        //            O2_pointx = M_pointx + 3;
-        //            mid_Object = true;
-        //            break;
-        //        case 2:
-        //            set_Object2 = true;
-        //            O2_pointx = M_pointx + 7;
-        //            right_Object = true;
-        //            break;
-        //        }
-        //    }
-        //    else if (mid_Object == true) {
-        //        switch (num2)
-        //        {
-        //        case 1:
-        //            set_Object2 = true;
-        //            O2_pointx = M_pointx - 4;
-        //            left_Object = true;
-        //            break;
-        //        case 2:
-        //            set_Object2 = true;
-        //            O2_pointx = M_pointx + 7;
-        //            right_Object = true;
-        //            break;
-        //        }
-        //    }
-        //    else if (right_Object == true) {
-        //        switch (num2)
-        //        {
-        //        case 1:
-        //            set_Object2 = true;
-        //            O2_pointx = M_pointx - 4;
-        //            left_Object = true;
-        //            break;
-        //        case 2:
-        //            set_Object2 = true;
-        //            O2_pointx = M_pointx + 3;
-        //            mid_Object = true;
-        //            break;
-        //        }
-        //    }
-        //}
-        glutTimerFunc(1, ObjectTimer, value); // 타이머함수 재 설정
-    }
-}
-
-bool object2_Height = true;  //위아래 튕기기 판단 위한 함수
-
 GLvoid TimerFunction(int value) {
     if (net.getStart()) {
-        ////장애물1
-        //if (set_Object1 == false) {
-        //    O1_pointz = M_pointz - 2.0f;
-        //}
-        //else
-        //{
-        //    O1_pointz += 0.2f;
-        //    if (O1_pointz >= 0.0)
-        //    {
-        //        O1_pointz = M_pointz - 2.0f;
-
-        //        if (O1_pointx == M_pointx - 8)
-        //            left_Object = false;
-        //        else if (O1_pointx = M_pointx - 2)
-        //            mid_Object = false;
-        //        else if (O1_pointx = M_pointx + 4)
-        //            right_Object = false;
-
-        //        set_Object1 = false;
-        //    }
-        //}
-
-        ////장애물2
-        //if (set_Object2 == false) {
-        //    O2_pointz = M_pointz - 2.0f;
-        //    O2_pointy = 0.0f;
-        //}
-        //else
-        //{
-        //    O2_pointz += 0.2f;
-        //    if (object2_Height == true) {
-        //        O2_pointy += 0.1f;
-        //        if (O2_pointy >= 4.0f)
-        //            object2_Height = false;
-        //    }
-        //    else {
-        //        O2_pointy -= 0.1f;
-        //        if (O2_pointy <= 0.0f)
-        //            object2_Height = true;
-
-        //    }
-
-        //    if (O2_pointz >= 0.0)
-        //    {
-        //        O2_pointz = M_pointz - 2.0f;
-
-        //        if (O2_pointx == M_pointx - 4)
-        //            left_Object = false;
-        //        else if (O2_pointx = M_pointx + 3)
-        //            mid_Object = false;
-        //        else if (O2_pointx = M_pointx + 7)
-        //            right_Object = false;
-
-        //        set_Object2 = false;
-        //    }
-
-        //}
-
-
-        // 몬스터 이동 
-       // M_pointz -= 0.3f;
         if (M_boolt) {  //다리 회전 
             M_setat += setatspeed;
             if (M_setat >= 60.0f) {
@@ -952,11 +844,6 @@ GLvoid TimerFunction(int value) {
                 M_boolt = true;
             }
         }
-        //---------------------------------
-        //뒤 장애물 이동 
-        B_pointz -= 0.1f;
-
-
 
         if (boolj == true) {
             transj += jumpspeedup; //노트북 0.005
@@ -972,8 +859,6 @@ GLvoid TimerFunction(int value) {
             }
         }
 
-
-
         if (boolw) { //전진
             //pointz -= 0.07f;       //노트북 0.007
             pointz -= 0.2;
@@ -984,34 +869,23 @@ GLvoid TimerFunction(int value) {
         }
 
         boola = true;
-       // else if (boola || boolw || boold) {  //팔회전 
-            if (boolt) {
-                setat += setatspeed;
-                if (setat >= 60.0f) {
-                    setat = 60.0f;
-                    boolt = false;
-                }
-            }
-            else {
-                setat -= setatspeed;
-                if (setat <= -60.0f) {
-                    setat = -60.0f;
-                    boolt = true;
-                }
-            }
-      //  }
 
-    
-       // if (net.gameover == false && transj < -5) {      // 아래로 떨어졌을 때,사망 사운드
-            //glEnd();
-           // sound5();
-         //   net.gameover = true;
-       // }
-
-
-     
-        glutTimerFunc(1, TimerFunction, value); // 타이머함수 재 설정
+       if (boolt) {
+           setat += setatspeed;
+           if (setat >= 60.0f) {
+               setat = 60.0f;
+               boolt = false;
+           }
+       }
+       else {
+           setat -= setatspeed;
+           if (setat <= -60.0f) {
+               setat = -60.0f;
+               boolt = true;
+           }
+       }
     }
+    glutTimerFunc(1, TimerFunction, value); // 타이머함수 재 설정
 }
 
 GLvoid Keyboard(unsigned char key, int x, int y) {
@@ -1024,108 +898,11 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
             key_a_state = true;
         if (key == 'd')
             key_d_state = true;
+    }
 
-        //    switch (key) {
-        //    case 'W':
-        //    case 'w':
-        //        setam = 180.0f;
-        //        boolw = true;
-        //        boola = false;
-        //        boold = false;
-        //       // pointz -= 0.5;
-        //        break;
-        //    case 'S':
-        //    case 's':
-        //        setam = -180.0f;
-        //        boolw = false;
-        //        boolw2 = false;
-        //        boola = false;
-        //        boold = false;
-
-        //        break;
-        //    case 'A':
-        //    case 'a':
-        //        if(boolw == true || boolw2 == true)
-        //            setam = -135.0f;
-        //        else 
-        //            setam = -90.0f;
-        //    //    boolw = false;
-        //        boola = true;
-        //        boold = false;
-        //        boolw = false;
-        //        boolw2 = true;
-        //        pointx -= 0.2;        //코딩용
-        //        if (pointx <= -5.5) {
-        //            pointx = -5.5;
-        //        }
-        //        break;
-        //    case 'd':
-        //    case 'D':
-        //        if (boolw == true || boolw2 == true)
-        //            setam = 135.0f;
-        //        else
-        //            setam = 90.0f;
-        //   //     boolw = false;
-        //        boola = false;
-        //        boold = true;
-        //        boolw = false;
-        //        boolw2 = true;
-        //        pointx += 0.2;        //코딩용
-        //        if (pointx >= 5.5) {
-        //            pointx = 5.5;
-        //        }
-        //        break;
-        //    case 'I':
-        //    case 'i':
-        //        boolw = false;
-        //        boold = false;
-        //        break;
-        //    case 'j':
-        //    case 'J':
-        //        sound3();
-        //        if ( !boolj2) {
-        //            if (transj >= 0.0) {
-        //                boolj = true;
-        //                boolj2 = true;
-        //            }
-        //        }
-        //        break;
-
-        //    case 'P':
-        //    case 'p':
-        //        glutLeaveMainLoop();
-        //        break;
-        //    case 27:    /* Esc - Quits the program. */
-        //        printf("done.\n");
-        //        exit(1);
-        //        break;
-
-        //    case ' ':    /* Space - toggles mode.     */
-        //        mode = (mode == MODE_BITMAP) ? MODE_STROKE : MODE_BITMAP;
-        //        font_index = 0;
-        //        glutPostRedisplay();
-        //        break;
-
-        //    case '1':
-        //    case '2':
-        //    case '3':
-        //    case '4':
-        //    case '5':
-        //    case '6':
-        //    case '7':
-        //        if (mode == MODE_BITMAP || key == '1' || key == '2') {
-        //            font_index = key - '1';
-        //        }
-        //        glutPostRedisplay();
-        //        break;
-        //    }
-        //    glutPostRedisplay(); //--- 배경색이 바뀔때마다 출력 콜백함수를 호출하여 화면을 refresh 한다
-        //}
-        //else {
-        //    if (key == 'r' || key == 'R') {
-        //        if (gameover)
-        //            restart();
-        //    }
+    if (net.restart == true && key == 'r') {
+        gamestart = true;
+        net.restart = false;
     }
 }
 
@@ -1149,7 +926,6 @@ void restart() {
     float setac = 0.0f;   //카메라 공전
     float setay = 0.0f;      //카메라 자전
     float transz = 0.0f;       //카메라 축이동
-
 
     //명령 관련
     boolw = false;
@@ -1176,7 +952,6 @@ void restart() {
     map2 = false;
     version2 = false;
     version3 = false;
-
 
     speed = 0.17;
     jumpspeedup = 0.5;

@@ -27,541 +27,665 @@ using namespace std;
 //queue<CLIENT_DATA*> recvQueue;
 //mutex recvLock;
 CLIENT_INFO clientInfo[3];
-// 0: 보스 1: 따라오는 장애물 2~5: 장애물
-OBJECT_INFO objectInfo[6];
+// 0: 보스 1: 따라오는 장애물 2, 3: 장애물
+OBJECT_INFO objectInfo[4];
 
 bool gameStart = false;
 bool goal = false;
+int die_cnt;
 /* 의범 - 이동시 이동 크기 설정하기(변수 타입 변경 가능) */
-float dx = 0.05;
-float dz = 0.05;
+float dx = 0.12;
+float dz = 0.12;
 
 default_random_engine dre{ random_device{}() };
-uniform_int_distribution<> uid{BALL, BULLDOZER};
+uniform_int_distribution<> uid{ BALL, BULLDOZER };
 uniform_int_distribution<int> IntUid{ 1, 3 };
 
 int recvn(SOCKET s, char* buf, int len, int flags) {
-	int received;
-	char* ptr = buf;
-	int left = len;
+    int received;
+    char* ptr = buf;
+    int left = len;
 
-	while (left > 0) {
-		received = recv(s, ptr, left, flags);
-		if (SOCKET_ERROR == received)
-			return SOCKET_ERROR;
-		else if (0 == received)
-			break;
-		left -= received;
-		ptr += received;
-	}
-	return (len - left);
+    while (left > 0) {
+        received = recv(s, ptr, left, flags);
+        if (SOCKET_ERROR == received)
+            return SOCKET_ERROR;
+        else if (0 == received)
+            break;
+        left -= received;
+        ptr += received;
+    }
+    return (len - left);
 }
 
 void SC_GAMESTART()
 {
-	SERVER_DATA server_data;
-	server_data.dataType = GAME_START;
-	gameStart = true;
-	for (const auto& clients : clientInfo)
-		send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+    SERVER_DATA server_data;
+    server_data.dataType = GAME_START;
+    gameStart = true;
+    for (const auto& clients : clientInfo)
+        send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 }
 
 void SC_LOGIN(int id)
 {
-	// 전달할 유저의 정보 셋팅
-	SERVER_DATA server_data;
-	server_data.dataType = LOGIN;
-	server_data.id = clientInfo[id].id;	
-	server_data.x = clientInfo[id].x;
-	server_data.y = clientInfo[id].y;
-	server_data.z = clientInfo[id].z;
+    // 전달할 유저의 정보 셋팅
+    SERVER_DATA server_data;
+    server_data.dataType = LOGIN;
+    server_data.id = clientInfo[id].id;
+    server_data.x = clientInfo[id].x;
+    server_data.y = clientInfo[id].y;
+    server_data.z = clientInfo[id].z;
+    cout << "[" << server_data.id << "]번 클라 로그인" << endl;
 
-	for (const auto& clients : clientInfo) {
-		if (true == clients.alive) {
-			// 본인에게 전달
-			if (id == clients.id) {
-				server_data.subDataType = SELF;
-				for (const auto& other : clientInfo) {
-					if (clients.id > other.id) {
-						SERVER_DATA other_server_data;
-						other_server_data.dataType = LOGIN;
-						other_server_data.subDataType = OTHER;
-						other_server_data.id = clientInfo[other.id].id;
-						other_server_data.x = clientInfo[other.id].x;
-						other_server_data.y = clientInfo[other.id].y;
-						other_server_data.z = clientInfo[other.id].z;
-						send(clients.sock, (char*)&other_server_data, sizeof(SERVER_DATA), 0);
+    for (const auto& clients : clientInfo) {
+        if (id == clients.id) {
+            server_data.subDataType = SELF;
+            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+        }
+        for (const auto& other : clientInfo) {
+            if (clients.id != other.id) {
+                SERVER_DATA other_server_data;
+                other_server_data.dataType = LOGIN;
+                other_server_data.subDataType = OTHER;
+                other_server_data.id = clientInfo[other.id].id;
+                other_server_data.x = clientInfo[other.id].x;
+                other_server_data.y = clientInfo[other.id].y;
+                other_server_data.z = clientInfo[other.id].z;
+                send(clients.sock, (char*)&other_server_data, sizeof(SERVER_DATA), 0);
 
-					}
-				}
-			}
-			// 다른 유저에게 전달
-			else
-				server_data.subDataType = OTHER;
-			send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-		}
-	}
+            }
+        }
+    }
+
 }
 
 /* 의범 -  Goal_Check()와 Coll_check() 작성하기 */
-void GOAL_CHECK(CLIENT_INFO clientInfo)
+void GOAL_CHECK(CLIENT_INFO client_Info)
 {
-	if (clientInfo.z <= -60) {
-		SERVER_DATA server_data;
-		server_data.dataType = GAME_RESULT;
-		server_data.mission_result = true;		
-		send(clientInfo.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+    if (client_Info.z <= -GOALLINE) {
+        for (auto& clients : clientInfo) {
+            SERVER_DATA server_data;
+            if (clients.id == client_Info.id) {
+                server_data.dataType = GAME_CLEAR;
+            }
+            else {
+                server_data.dataType = GAME_OVER;
+            }
+            server_data.id = clients.id;
+            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+            clients.alive = false;
+        }
+        goal = true;
+        gameStart = false;
 
-		/* 도착한 유저 정보 바꾸기 - 서버에서 */
+        for (auto& clients : clientInfo) {
+            clients.x = -3 + (float)(clients.id * 3);
+            clients.y = 0;
+            clients.z = 0;
+        }
+        for (const auto& clients : clientInfo) {
+            for (const auto& client : clientInfo) {
+                SERVER_DATA server_data;
+                server_data.dataType = LOCATION;
+                server_data.subDataType = PLAYER;
+                server_data.id = client.id;
+                server_data.x = client.x;
+                server_data.y = client.y;
+                server_data.z = client.z;
+                send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 
-		clientInfo.alive = false;		
-		/* 남은시간 10초로 바꾸기 - 서버에서 */
-		goal = true;
-	}
+                SERVER_DATA server_data2;
+                server_data2.dataType = RESTART;
+                server_data2.id = client.id;
+                send(clients.sock, (char*)&server_data2, sizeof(SERVER_DATA), 0);
+            }
+        }
+
+        for (int i = 0; i < 4; ++i) {
+            objectInfo[i].id = i;
+            objectInfo[i].objectType = NULL;
+        }
+
+        objectInfo[0].x = 0;
+        objectInfo[0].y = 0;
+        objectInfo[0].z = -20;
+
+        objectInfo[1].x = 0;
+        objectInfo[1].y = 0;
+        objectInfo[1].z = 10;         // BOSS와 20차이가 나야 한다.
+
+        for (int i = 2; i < 4; ++i) {
+            objectInfo[i].x = -9999;
+            objectInfo[i].y = 0;
+            objectInfo[i].z = -9999;
+            objectInfo[i].moving = false;
+        }
+
+        for (const auto& clients : clientInfo) {
+            SERVER_DATA server_data;
+            server_data.dataType = LOCATION;
+            server_data.subDataType = OBJECT;
+            for (const auto& objects : objectInfo) {
+                server_data.objectInfo = objects;
+                send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+            }
+        }
+
+    }
 }
 
-void COLL_CHECK(CLIENT_INFO clientInfo)
+void COLL_CHECK(OBJECT_INFO object_info)
 {
-	//float client_minX = clientInfo.x - USERSIZE;
-	//float client_minY = clientInfo.y - USERSIZE;
-	//float client_minZ = clientInfo.z - USERSIZE;
-	//for (const auto& objects : objectInfo) {
-	//	float objects_minX = objects.x - OBJECTSIZE;
-	//	float objects_maxX = objects.x + OBJECTSIZE;
-	//	float objects_minY = objects.y - OBJECTSIZE;
-	//	float objects_maxY = objects.y + OBJECTSIZE;
-	//	float objects_minZ = objects.z - OBJECTSIZE;
-	//	float objects_maxZ = objects.z + OBJECTSIZE;
-	//	if (client_minX > objects_minX && client_minX < objects_maxX &&
-	//		client_minY > objects_minY && client_minY < objects_maxY &&
-	//		client_minZ > objects_minZ && client_minZ < objects_maxZ) {
-	//		SERVER_DATA server_data;
-	//		server_data.dataType = GAME_OVER;
-	//		send(clientInfo.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-	//		/* GAME_OVER된 유저 정보 바꾸기 - 서버에서 */
-	//		clientInfo.alive = false;
-	//	}
-	//}
-}
-void COLL_CHECK(OBJECT_INFO objectInfo)
-{
+    for (int i = 0; i < 3; ++i) {
+        if (clientInfo[i].alive) {
+            if (object_info.id == 1) {                   //뒤에서 오는 장애물과는 충돌 ok
+                if (object_info.z <= clientInfo[i].z) {
+                    cout << "[" << clientInfo[i].id << "]번 클라 트래커 충돌" << endl;
+                    SERVER_DATA server_data;
+                    server_data.dataType = GAME_OVER;
+                    server_data.id = i;
+                    clientInfo[i].alive = false;
+                    for (const auto& clients : clientInfo) {
+                        send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+                    }
+                }
+            }
+            else if (object_info.id != 0 && object_info.id != 1) {
 
-	for (int i = 0; i < 3; ++i) {
-		if (objectInfo.id == 1) {                   //뒤에서 오는 장애물과는 충돌 ok
-			if (objectInfo.z <= clientInfo[i].z) {
-				SERVER_DATA server_data;
-				server_data.dataType = GAME_OVER;
-				send(clientInfo[i].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-				cout << "트래커 충돌" << endl;
+                if (object_info.objectType != NULL) {
 
-			}
-		}
-		else if (objectInfo.id != 0 && objectInfo.id != 1) {
+                    if ((clientInfo[i].x - USERSIZE < object_info.x - OBJECTSIZE) &&
+                        (clientInfo[i].x + USERSIZE > object_info.x - OBJECTSIZE) &&
+                        (object_info.x - OBJECTSIZE < clientInfo[i].x + USERSIZE) &&
+                        (clientInfo[i].x + USERSIZE < object_info.x + OBJECTSIZE) &&
+                        (object_info.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
+                        (clientInfo[i].z - USERSIZE <= object_info.z + OBJECTSIZE2)) {
+                        SERVER_DATA server_data;
+                        server_data.dataType = GAME_OVER;
+                        server_data.id = i;
+                        clientInfo[i].alive = false;
+                        for (const auto& clients : clientInfo) {
+                            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+                        }
 
-			if (true == clientInfo[i].alive && objectInfo.objectType != NULL) {
+                    }
+                    else if ((object_info.x - OBJECTSIZE <= clientInfo[i].x - USERSIZE) &&
+                        (clientInfo[i].x - USERSIZE <= object_info.x + OBJECTSIZE) &&
+                        (object_info.x - OBJECTSIZE <= clientInfo[i].x + USERSIZE) &&
+                        (clientInfo[i].x + USERSIZE <= object_info.x + OBJECTSIZE) &&
+                        (object_info.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
+                        (clientInfo[i].z - USERSIZE <= object_info.z + OBJECTSIZE2)) {
 
+                        SERVER_DATA server_data;
+                        server_data.dataType = GAME_OVER;
+                        server_data.id = i;
+                        clientInfo[i].alive = false;
+                        for (const auto& clients : clientInfo) {
+                            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+                        }
 
-				if ((clientInfo[i].x - USERSIZE < objectInfo.x - OBJECTSIZE) &&
-					(clientInfo[i].x + USERSIZE > objectInfo.x - OBJECTSIZE) &&
-					(objectInfo.x - OBJECTSIZE < clientInfo[i].x + USERSIZE) &&
-					(clientInfo[i].x + USERSIZE < objectInfo.x + OBJECTSIZE) &&
-					(objectInfo.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
-					(clientInfo[i].z - USERSIZE <= objectInfo.z + OBJECTSIZE2)) {
-					SERVER_DATA server_data;
-					server_data.dataType = GAME_OVER;
-					send(clientInfo[i].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-					clientInfo[i].alive = false;
+                    }
+                    else if ((clientInfo[i].x - USERSIZE < object_info.x + OBJECTSIZE) &&
+                        (object_info.x + OBJECTSIZE < clientInfo[i].x + USERSIZE) &&
+                        (object_info.x - OBJECTSIZE < clientInfo[i].x - USERSIZE) &&
+                        (clientInfo[i].x - USERSIZE < object_info.x + OBJECTSIZE) &&
+                        (object_info.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
+                        (clientInfo[i].z - USERSIZE <= object_info.z + OBJECTSIZE2)) {
 
-				}
-				else if ((objectInfo.x - OBJECTSIZE <= clientInfo[i].x - USERSIZE) &&
-					(clientInfo[i].x - USERSIZE <= objectInfo.x + OBJECTSIZE) &&
-					(objectInfo.x - OBJECTSIZE <= clientInfo[i].x + USERSIZE) &&
-					(clientInfo[i].x + USERSIZE <= objectInfo.x + OBJECTSIZE) &&
-					(objectInfo.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
-					(clientInfo[i].z - USERSIZE <= objectInfo.z + OBJECTSIZE2)) {
-				
-					SERVER_DATA server_data;
-					server_data.dataType = GAME_OVER;
-					send(clientInfo[i].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-					clientInfo[i].alive = false;
+                        SERVER_DATA server_data;
+                        server_data.dataType = GAME_OVER;
+                        server_data.id = i;
+                        clientInfo[i].alive = false;
+                        for (const auto& clients : clientInfo) {
+                            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-				}
-				else if ((clientInfo[i].x - USERSIZE < objectInfo.x + OBJECTSIZE) &&
-					(objectInfo.x + OBJECTSIZE < clientInfo[i].x + USERSIZE) &&
-					(objectInfo.x - OBJECTSIZE < clientInfo[i].x - USERSIZE) &&
-					(clientInfo[i].x - USERSIZE < objectInfo.x + OBJECTSIZE) &&
-					(objectInfo.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
-					(clientInfo[i].z - USERSIZE <= objectInfo.z + OBJECTSIZE2)) {
+    if (!clientInfo[0].alive && !clientInfo[1].alive && !clientInfo[2].alive) {
+        gameStart = false;
+        for (auto& clients : clientInfo) {
+            clients.x = -3 + (float)(clients.id * 3);
+            clients.y = 0;
+            clients.z = 0;
+        }
+        for (const auto& clients : clientInfo) {
+            for (const auto& client : clientInfo) {
+                SERVER_DATA server_data;
+                server_data.dataType = LOCATION;
+                server_data.subDataType = PLAYER;
+                server_data.id = client.id;
+                server_data.x = client.x;
+                server_data.y = client.y;
+                server_data.z = client.z;
+                send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
 
-					SERVER_DATA server_data;
-					server_data.dataType = GAME_OVER;
-					send(clientInfo[i].sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-					clientInfo[i].alive = false;
+                SERVER_DATA server_data2;
+                server_data2.dataType = RESTART;
+                server_data2.id = client.id;
+                send(clients.sock, (char*)&server_data2, sizeof(SERVER_DATA), 0);
+            }
+        }
 
-				}
-			}
+        for (int i = 0; i < 4; ++i) {
+            objectInfo[i].id = i;
+            objectInfo[i].objectType = NULL;
+        }
 
-		}
-	}
+        objectInfo[0].x = 0;
+        objectInfo[0].y = 0;
+        objectInfo[0].z = -20;
+
+        objectInfo[1].x = 0;
+        objectInfo[1].y = 0;
+        objectInfo[1].z = 10;         // BOSS와 20차이가 나야 한다.
+
+        for (int i = 2; i < 4; ++i) {
+            objectInfo[i].x = -9999;
+            objectInfo[i].y = 0;
+            objectInfo[i].z = -9999;
+            objectInfo[i].moving = false;
+        }
+        for (const auto& clients : clientInfo) {
+            SERVER_DATA server_data;
+            server_data.dataType = LOCATION;
+            server_data.subDataType = OBJECT;
+            for (const auto& objects : objectInfo) {
+                server_data.objectInfo = objects;
+                send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+            }
+        }
+    }
 
 }
 
 bool RESET_OBJECT(OBJECT_INFO object)
 {
-	if (objectInfo[1].z < object.z && true == object.moving) {
-		//cout << "트래커 z - " << objectInfo[1].z << ",   장애물 z - " << object.z << endl;
-		//cout << "리셋" << endl;
-		return true;
-	}
+    if (objectInfo[1].z < object.z && true == object.moving) {
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 void SC_SEND(CLIENT_DATA clientData)
 {
-	int id = clientData.id;
-	SERVER_DATA server_data;
-	server_data.dataType = LOCATION;
-	server_data.subDataType = PLAYER;
-	switch (clientData.type) {
-	case MOVE_FRONT:
-		clientInfo[id].z -= dz;
-		cout << clientInfo[id].x << " " << clientInfo[id].y << " " << clientInfo[id].z << "  id: " << id << endl;
-		break;
-	case MOVE_BACK:
-		clientInfo[id].z += dz;
-		break;
-	case MOVE_RIGHT:
-		clientInfo[id].x += dx;
-		break;
-	case MOVE_LEFT:
-		clientInfo[id].x -= dx;
-		break;
-	}
+    int id = clientData.id;
+    if (LOGOUT == clientData.type) {
+        clientInfo[id].state = NONE;
+        clientInfo[id].alive = false;
 
-	server_data.x = clientInfo[id].x;
-	server_data.y = clientInfo[id].y;
-	server_data.z = clientInfo[id].z;
-	server_data.id = id;
+        SERVER_DATA server_data;
+        server_data.dataType = LOGOUT;
+        server_data.id = id;
+        for (const auto& clients : clientInfo) {
+            send(clients.sock, (char*)&server_data, sizeof(server_data), 0);
+        }
+    }
 
-	for (const auto& clients : clientInfo)
-		send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-	cout << clientInfo[id].z << endl;
-	// 위에 이동시킨 유저 결승점 통과여부 판단
-	GOAL_CHECK(clientInfo[id]);
-	
-	// 위에 이동시킨 유저 충돌여부 판단
-	COLL_CHECK(clientInfo[id]);
+    else if (GAME_START == clientData.type) {
+        clientInfo[id].alive = true;
+
+        clientInfo[id].x = -3 + (clientInfo[id].id * 3);
+        clientInfo[id].y = 0;
+        clientInfo[id].z = 0;
+
+        // 3명의 유저가 접속하면 게임 시작
+        if (clientInfo[0].alive && clientInfo[1].alive && clientInfo[2].alive) {
+            int start_time = clock();
+            int end_time = clock();
+            while (end_time - start_time < 1000) {
+                end_time = clock();
+            }
+            for (int i = 0; i < 4; ++i)
+                objectInfo[i].id = i;
+
+            objectInfo[0].x = 0;
+            objectInfo[0].y = 0;
+            objectInfo[0].z = -20;
+
+            objectInfo[1].x = 0;
+            objectInfo[1].y = 0;
+            objectInfo[1].z = 10;         // BOSS와 20차이가 나야 한다.
+
+            for (int i = 2; i < 4; ++i) {
+                objectInfo[i].x = -9999;
+                objectInfo[i].y = 0;
+                objectInfo[i].z = -9999;
+                objectInfo[i].moving = false;
+                objectInfo[i].objectType = NULL;
+            }
+            SC_GAMESTART();
+        }
+    }
+    else {
+        SERVER_DATA server_data;
+        server_data.dataType = LOCATION;
+        server_data.subDataType = PLAYER;
+        switch (clientData.type) {
+        case MOVE_FRONT:
+            clientInfo[id].z -= dz;
+            break;
+        case MOVE_BACK:
+            clientInfo[id].z += dz;
+            break;
+        case MOVE_RIGHT:
+            clientInfo[id].x += dx;
+            break;
+        case MOVE_LEFT:
+            clientInfo[id].x -= dx;
+            break;
+        }
+
+        server_data.x = clientInfo[id].x;
+        server_data.y = clientInfo[id].y;
+        server_data.z = clientInfo[id].z;
+        server_data.id = id;
+
+        for (const auto& clients : clientInfo) 
+            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+        // 위에 이동시킨 유저 결승점 통과여부 판단
+        GOAL_CHECK(clientInfo[id]);
+    }
 }
 
 DWORD WINAPI SC_TIME(LPVOID arg)
 {
-	// 전달할 유저의 정보 셋팅
-	SERVER_DATA server_data;
-	server_data.dataType = TIME;
-	server_data.time = MAXTIME;		// 초기 시간 제한 값 세팅
-	auto start = INFINITE;
-	int send_time = MAXTIME + 1;
-	while (true) {
-		if (true == gameStart){
-			if (INFINITE == start)
-				start = clock();
-			if (server_data.time != send_time) {
-				for (const auto& clients : clientInfo)
-					send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-			}
-			if (0 == send_time) {
-				server_data.dataType = GAME_OVER;
-				for (const auto& clients : clientInfo) {
-					if(true == clients.alive)
-						send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-				}
-			}
-		}
-		send_time = server_data.time;
-		auto end = clock();
-		server_data.time = MAXTIME - (int)((end - start) / 1000);
-		if (true == goal && server_data.time > COUNTDOWN)
-			server_data.time = COUNTDOWN;
-	}
+    // 전달할 유저의 정보 셋팅
+    SERVER_DATA server_data;
+    server_data.dataType = TIME;
+    server_data.time = MAXTIME;      // 초기 시간 제한 값 세팅
+    auto start = INFINITE;
+    int send_time = MAXTIME + 1;
+    while (true) {
+        if (true == gameStart) {
+            if (INFINITE == start)
+                start = clock();
+            if (server_data.time != send_time) {
+                for (const auto& clients : clientInfo)
+                    send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+            }
+            if (0 == send_time) {
+                server_data.dataType = GAME_OVER;
+                for (const auto& clients : clientInfo) {
+                    if (true == clients.alive)
+                        send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+                }
+            }
+        }
+        send_time = server_data.time;
+        auto end = clock();
+        server_data.time = MAXTIME - (int)((end - start) / 1000);
+        if (true == goal && server_data.time > COUNTDOWN)
+            server_data.time = COUNTDOWN;
+    }
 }
 
-DWORD WINAPI S_RECV_PACKET(LPVOID arg) 
+DWORD WINAPI S_RECV_PACKET(LPVOID arg)
 {
-	SOCKET client_sock = (SOCKET)arg;
-	int retval;
-	SOCKADDR_IN clientaddr;
-	int addrlen;
-	CLIENT_DATA clientData;
+    SOCKET client_sock = (SOCKET)arg;
+    int retval;
+    SOCKADDR_IN clientaddr;
+    int addrlen;
+    CLIENT_DATA clientData;
 
-	// 클라이언트 정보 얻기
-	addrlen = sizeof(clientaddr);
-	getpeername(client_sock, (SOCKADDR*)&clientaddr, &addrlen);
-	while (true) {
-		retval = recvn(client_sock, (char*)&clientData, sizeof(CLIENT_DATA), 0);
-		if (SOCKET_ERROR == retval)
-			break;
-		
-		// 큐 사용시
-		//recvLock.lock();
-		//recvQueue.emplace(clientData);
-		//recvLock.unlock();
+    // 클라이언트 정보 얻기
+    addrlen = sizeof(clientaddr);
+    getpeername(client_sock, (SOCKADDR*)&clientaddr, &addrlen);
+    while (true) {
+        retval = recvn(client_sock, (char*)&clientData, sizeof(CLIENT_DATA), 0);
+        if (SOCKET_ERROR == retval)
+            break;
 
-		// 큐 미사용시 - 받은 데이터 적용 후 send()
-		SC_SEND(clientData);
-	}
-	closesocket(client_sock);
-	return 0;
+        // 큐 사용시
+        //recvLock.lock();
+        //recvQueue.emplace(clientData);
+        //recvLock.unlock();
+
+        // 큐 미사용시 - 받은 데이터 적용 후 send()
+        SC_SEND(clientData);
+    }
+    closesocket(client_sock);
+    return 0;
 }
 
 DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 {
-	auto start = INFINITE;
-	auto end = INFINITE;
-	auto start_w = INFINITE;
-	auto end_w = INFINITE;
-	int firstline = 0;
-	int firstline2 = 0;
-	int secondline = 0;
-	SERVER_DATA server_data;
-	server_data.dataType = LOCATION;
-	server_data.subDataType = OBJECT;
+    auto start = INFINITE;
+    auto end = INFINITE;
+    auto start_w = INFINITE;
+    auto end_w = INFINITE;
+    int firstline = 0;
+    int firstline2 = 0;
+    int secondline = 0;
+    SERVER_DATA server_data;
+    server_data.dataType = LOCATION;
+    server_data.subDataType = OBJECT;
 
-	while (true) {
-		if (true == gameStart) {
-			if (start_w == INFINITE) {
-				start_w = clock();
-			}
-			else {
-				end_w = clock();
-				if (end_w - start_w > 100) {
-					// 의범 - 오브젝트 자료구조 만든 뒤 각 프레임당 변동값 셋팅 후 적절히 변경하여 사용 
-					// -6.25, 0 , 6.25
-					for (auto& objects : objectInfo) {
-						switch (objects.id) {
-						case 0:	// BOSS
-							objects.objectType = BOSS;
-							objects.z -= 0.6;
-							
-							//cout << "fsdfs\n";
-							break;
-						case 1:	// TRACKER
-							objects.objectType = TRACKER;
-							objects.z -= 0.3;
-							//cout << "트래커 - " << objects.z << endl;
-							break;
-						default:
-							if (objects.objectType == NULL) {
-								if (2 == objects.id || 3 == objects.id) {
-									if (2 == objects.id ) {   // id:2 먼저 라인 정하기 
-										start = clock();
-										firstline = IntUid(dre);
-									}
-									switch (firstline)
-									{
-									case 1:
-										objects.line = objects.id;
-										objects.x = OBJECTPOSX * (objects.id - 2);   //0  //4
-										break;
-									case 2:
-										if (2 == objects.id) {
-											objects.line = 1;
-											objects.x = -OBJECTPOSX;      //-4
-										}
-										else {
-											objects.line = objects.id;
-											objects.x = OBJECTPOSX;         //4
-										}
-										break;
-									case 3:
-										objects.line = objects.id - 1;
-										objects.x = -OBJECTPOSX * (3 - objects.id);  //-4   //0 
-										break;
-									}
+    while (true) {
+        if (true == gameStart) {
+            if (start_w == INFINITE) {
+                start_w = clock();
+            }
+            else {
+                end_w = clock();
+                if (end_w - start_w > 100) {
+                    // -6.25, 0 , 6.25
+                    for (auto& objects : objectInfo) {
+                        switch (objects.id) {
+                        case 0:   // BOSS
+                            objects.objectType = BOSS;
+                            objects.z -= 0.6;
 
-									objects.z = objectInfo[0].z - 3;        //장애물 종류 정함 
-									if(2 == objects.id)
-										objects.objectType = BULLDOZER;
-									else
-										objects.objectType = BALL;
-									objects.moving = true;
-								}
-							/*	else { //수정하자 
-									if (4 == objects.id && false == objects.moving) {
-										end = clock();
-										if (end - start >= MOVEDELAY) {
-											secondline = IntUid(dre);
-										}
-									}
-									if (0 != secondline) {
-										switch (secondline)
-										{
-										case 1:
-											objects.line = objects.id - 2;
-											objects.x = OBJECTPOSX * (objects.id - 4);
-											break;
-										case 2:
-											if (4 == objects.id) {
-												objects.line = 1;
-												objects.x -= OBJECTPOSX;
-											}
-											else {
-												objects.line = 3;
-												objects.x = OBJECTPOSX;
-											}
-											break;
-										case 3:
-											objects.line = objects.id - 3;
-											objects.x -= OBJECTPOSX * (5 - objects.id);
-											break;
-										}
-										objects.z = objectInfo[0].z - 3;
-										objects.objectType = uid(dre);
-										objects.moving = true;
-									}
-								}*/
-							}
-							else {   // 장애물 종류 다 정해지면 움직여
-								if (true == objects.moving) {
-									objects.z += 0.8;
-								
-								}
-							}
-							break;
-						}
-						server_data.objectInfo = objects;
+                            break;
+                        case 1:   // TRACKER
+                            objects.objectType = TRACKER;
+                            objects.z -= 0.6;
+                            break;
+                        default:
+                            if (objects.objectType == NULL) {
+                                if (2 == objects.id || 3 == objects.id) {
+                                    if (2 == objects.id) {   // id:2 먼저 라인 정하기 
+                                        start = clock();
+                                        firstline = IntUid(dre);
+                                    }
+                                    switch (firstline)
+                                    {
+                                    case 1:
+                                        objects.line = objects.id;
+                                        objects.x = OBJECTPOSX * (objects.id - 2);   //0  //4
+                                        break;
+                                    case 2:
+                                        if (2 == objects.id) {
+                                            objects.line = 1;
+                                            objects.x = -OBJECTPOSX;      //-4
+                                        }
+                                        else {
+                                            objects.line = objects.id;
+                                            objects.x = OBJECTPOSX;         //4
+                                        }
+                                        break;
+                                    case 3:
+                                        objects.line = objects.id - 1;
+                                        objects.x = -OBJECTPOSX * (3 - objects.id);  //-4   //0 
+                                        break;
+                                    }
 
-						if (objectInfo->id != 4 && objectInfo->id != 5) {
-							for (const auto& clients : clientInfo)
-								send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-							cout << "장애물[" << objects.id << "] - " << " , " << objects.x << ", " << objects.z << endl;
-						}
+                                    objects.z = objectInfo[0].z - 3;        //장애물 종류 정함 
+                                    if (2 == objects.id)
+                                        objects.objectType = BULLDOZER;
+                                    else
+                                        objects.objectType = BALL;
+                                    objects.moving = true;
+                                }
+                                /*   else { //수정하자
+                                      if (4 == objects.id && false == objects.moving) {
+                                         end = clock();
+                                         if (end - start >= MOVEDELAY) {
+                                            secondline = IntUid(dre);
+                                         }
+                                      }
+                                      if (0 != secondline) {
+                                         switch (secondline)
+                                         {
+                                         case 1:
+                                            objects.line = objects.id - 2;
+                                            objects.x = OBJECTPOSX * (objects.id - 4);
+                                            break;
+                                         case 2:
+                                            if (4 == objects.id) {
+                                               objects.line = 1;
+                                               objects.x -= OBJECTPOSX;
+                                            }
+                                            else {
+                                               objects.line = 3;
+                                               objects.x = OBJECTPOSX;
+                                            }
+                                            break;
+                                         case 3:
+                                            objects.line = objects.id - 3;
+                                            objects.x -= OBJECTPOSX * (5 - objects.id);
+                                            break;
+                                         }
+                                         objects.z = objectInfo[0].z - 3;
+                                         objects.objectType = uid(dre);
+                                         objects.moving = true;
+                                      }
+                                   }*/
+                            }
+                            else {   // 장애물 종류 다 정해지면 움직여
+                                if (true == objects.moving) {
+                                    objects.z += 0.8;
 
+                                }
+                            }
+                            break;
+                        }
+                        server_data.objectInfo = objects;
 
-						
-						COLL_CHECK(objects);
+                        for (const auto& clients : clientInfo)
+                            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+                        cout << "장애물[" << objects.id << "] - " << " , " << objects.x << ", " << objects.z << endl;
 
-						if (objects.id != 0 && objects.id != 1) {
-							if (true == RESET_OBJECT(objects)) {
-								if (objects.id == 4)
-									secondline = 0;
+                        COLL_CHECK(objects);
 
-								objects.moving = false;
-								objects.objectType = NULL;
-								objects.x = INITPOSX;
-								objects.y = INITPOSY;
-								objects.z = objectInfo[0].z - 9999;
-								SERVER_DATA reset_server_data;
-								reset_server_data.dataType = LOCATION;
-								reset_server_data.subDataType = OBJECT;
-								reset_server_data.objectInfo = objects;
-								for (const auto& clients : clientInfo)
-									send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-							}
-						}
-					}
-					start_w = INFINITE;
-				}
-			}
-		}
-	}
+                        if (objects.id != 0 && objects.id != 1) {
+                            if (true == RESET_OBJECT(objects)) {
+                                if (objects.id == 4)
+                                    secondline = 0;
+
+                                objects.moving = false;
+                                objects.objectType = NULL;
+                                objects.x = INITPOSX;
+                                objects.y = INITPOSY;
+                                objects.z = objectInfo[0].z - 9999;
+                                SERVER_DATA reset_server_data;
+                                reset_server_data.dataType = LOCATION;
+                                reset_server_data.subDataType = OBJECT;
+                                reset_server_data.objectInfo = objects;
+                                for (const auto& clients : clientInfo)
+                                    send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+                            }
+                        }
+                    }
+                    start_w = INFINITE;
+                }
+            }
+        }
+        else {
+            start = INFINITE;
+            end = INFINITE;
+            start_w = INFINITE;
+            end_w = INFINITE;
+            firstline = 0;
+            firstline2 = 0;
+            secondline = 0;
+        }
+    }
 }
 
 bool start = false;
 int main(int argc, char* argv[]) {
-	int retval;
+    int retval;
 
-	WSADATA wsa;
-	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-		return 1;
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+        return 1;
 
-	SOCKET listen_sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (INVALID_SOCKET == listen_sock)
-		cout << "소켓에러" << endl;
+    SOCKET listen_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (INVALID_SOCKET == listen_sock)
+        cout << "소켓에러" << endl;
 
-	SOCKADDR_IN serveraddr;
-	ZeroMemory(&serveraddr, sizeof(serveraddr));
-	serveraddr.sin_family = AF_INET;
-	serveraddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
-	serveraddr.sin_port = htons(SERVERPORT);
-	retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
-	if (SOCKET_ERROR == retval)
-		cout << "주소할당에러" << endl;
+    SOCKADDR_IN serveraddr;
+    ZeroMemory(&serveraddr, sizeof(serveraddr));
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+    serveraddr.sin_port = htons(SERVERPORT);
+    retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
+    if (SOCKET_ERROR == retval)
+        cout << "주소할당에러" << endl;
 
-	retval = listen(listen_sock, SOMAXCONN);
-	if (SOCKET_ERROR == retval)
-		cout << "연결요청에러" << endl;
+    retval = listen(listen_sock, SOMAXCONN);
+    if (SOCKET_ERROR == retval)
+        cout << "연결요청에러" << endl;
 
-	SOCKET client_sock;
-	SOCKADDR_IN clientaddr;
-	int addrlen;
-	HANDLE hThread;
-	int userCount = 0;
+    SOCKET client_sock;
+    SOCKADDR_IN clientaddr;
+    int addrlen;
+    HANDLE hThread;
+    int userCount = 0;
 
-	// 시간 스레드, 오븍젝트 이동 스레드 생성
-	hThread = CreateThread(NULL, 0, SC_TIME, NULL, 0, NULL);
-	hThread = CreateThread(NULL, 0, SC_OBJECT_MOVE, NULL, 0, NULL);
+    // 시간 스레드, 오븍젝트 이동 스레드 생성
+    hThread = CreateThread(NULL, 0, SC_TIME, NULL, 0, NULL);
+    hThread = CreateThread(NULL, 0, SC_OBJECT_MOVE, NULL, 0, NULL);
 
-	while (1) {
-		// 3명이 유저가 접속할 때까지
-		if (false == gameStart) {
-			addrlen = sizeof(clientaddr);
-			client_sock = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
-			if (INVALID_SOCKET == client_sock) {
-				cout << "연결수락에러" << endl;
-				break;
-			}
+    while (1) {
+        addrlen = sizeof(clientaddr);
+        client_sock = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
+        if (INVALID_SOCKET == client_sock) {
+            cout << "연결수락에러" << endl;
+            break;
+        }
+        hThread = CreateThread(NULL, 0, S_RECV_PACKET, (LPVOID)client_sock, 0, NULL);
+        if (NULL == hThread)
+            closesocket(client_sock);
+        else
+            CloseHandle(hThread);
 
-			hThread = CreateThread(NULL, 0, S_RECV_PACKET, (LPVOID)client_sock, 0, NULL);
-			if (NULL == hThread)
-				closesocket(client_sock);
-			else
-				CloseHandle(hThread);
+        int cnt = 0;
+        bool enter = false;
+        for (auto& clients : clientInfo) {
+            if (FULL == clients.state) {
+                cnt++;
+                continue;
+            }
+            if (false == gameStart) {
+                //// 접속한 유저 초기 정보 셋팅
+                clients.sock = client_sock;
+                clients.state = FULL;
+                clients.id = cnt;
+                /* 의범 - 초기 접속 유저 위치 셋팅 */
+                clients.x = -3 + (cnt * 3);
+                clients.y = 0;
+                clients.z = 0;
+                enter = true;
+                SC_LOGIN(cnt);
+            }
+            break;
+        }
+        if (false == enter) {
+            SERVER_DATA server_data;
+            server_data.dataType = REJECT;
+            send(client_sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+        }
+    }
 
-			//// 접속한 유저 초기 정보 셋팅
-			clientInfo[userCount].sock = client_sock;
-			clientInfo[userCount].alive = true;
-			clientInfo[userCount].id = userCount;
-			/* 의범 - 초기 접속 유저 위치 셋팅 */
-			clientInfo[userCount].x = -3 + (userCount  * 3);
-			clientInfo[userCount].y = 0;
-			clientInfo[userCount].z = 0;
+    closesocket(listen_sock);
 
-			// 접속한 유저 정보 전달
-			SC_LOGIN(userCount++);
-
-			// 3명의 유저가 접속하면 게임 시작
-			if (clientInfo[0].alive  && clientInfo[1].alive && clientInfo[2].alive   ) {
-
-				for (int i = 0; i < 6; ++i)
-					objectInfo[i].id = i;
-
-				objectInfo[0].x = 0;
-				objectInfo[0].y = 0;
-				objectInfo[0].z = -10;
-				
-
-				objectInfo[1].x = 0;
-				objectInfo[1].y = 0;
-				objectInfo[1].z = 10;			// BOSS와 20차이가 나야 한다.
-
-				for (int i = 2; i < 6; ++i) {
-					objectInfo[i].x = -9999;
-					objectInfo[i].y =  0;
-					objectInfo[i].z = -9999;
-					objectInfo[i].moving = false;
-					objectInfo[i].objectType = NULL;
-				}
-				SC_GAMESTART();
-			}
-		}
-		// 3명 접속 후 게임 시작
-		else {
-
-		}
-	}
-	closesocket(listen_sock);
-
-	WSACleanup();
-	return 0;
+    WSACleanup();
+    return 0;
 }

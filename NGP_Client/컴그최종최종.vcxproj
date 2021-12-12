@@ -152,6 +152,7 @@
   <ItemGroup>
     <ClInclude Include="..\NGP\NGP\protocol.h" />
     <ClInclude Include="behind.h" />
+    <ClInclude Include="goalline.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="monster.h" />
     <ClInclude Include="Naruto.h" />

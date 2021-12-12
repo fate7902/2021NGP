@@ -22,10 +22,6 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 			objects[server_data.objectInfo.id].x = server_data.objectInfo.x;
 			objects[server_data.objectInfo.id].y = server_data.objectInfo.y;
 			objects[server_data.objectInfo.id].z = server_data.objectInfo.z;
-
-			if (TRACKER == server_data.objectInfo.objectType) {
-				cout << "트래커 - " << objects[server_data.objectInfo.id].z << endl;
-			}
 			break;
 		}
 		break;
@@ -44,19 +40,38 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 			break;
 		}
 		break;
+	case LOGOUT:
+		clients[server_data.id].alive = false;
+		break;
 	case GAME_START:   // 게임 시작
+		gameover = false;
+		gameclear = false;
 		m_start = true;
 		break;
 	case TIME: // 시간
 		game_time = server_data.time;
 		break;
 	case GAME_OVER:
-		gameover = true;
-		setStart(false);
+		clients[server_data.id].alive = false;
+		if (server_data.id == m_id) {
+			m_start = false;
+			gameover = true;
+			setStart(false);
+		}
 		break;
-	case GAME_RESULT:
+	case GAME_CLEAR:
+		m_start = false;
 		gameclear = true;
 		setStart(false);
+		break;
+	case REJECT:
+		exit(0);
+		break;
+	case RESTART:
+		if (server_data.id == m_id) {
+			restart = true;
+		}
+		clients[server_data.id].alive = true;
 		break;
 	}
 }
@@ -128,4 +143,12 @@ void Network::CS_MOVE()
 		client_data.type = MOVE_RIGHT;
 		send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);
 	}
+}
+
+void Network::CS_START()
+{
+	CLIENT_DATA client_data;
+	client_data.id = m_id;
+	client_data.type = GAME_START;
+	send(m_sock, (char*)&client_data, sizeof(CLIENT_DATA), 0);
 }

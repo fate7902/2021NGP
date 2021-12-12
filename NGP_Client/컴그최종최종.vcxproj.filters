@@ -59,6 +59,9 @@
     <ClInclude Include="..\NGP\NGP\protocol.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="goalline.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="컴그팀플.cpp">
