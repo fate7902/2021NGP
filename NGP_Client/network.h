@@ -19,10 +19,9 @@ class Network {
 public:
 	CLIENT_INFO clients[3];
 	OBJECT_INFO objects[6];
-	bool restart = false;
 
-	void C_UPDATE(SERVER_DATA server_data);
 	void network();
+	void C_UPDATE(SERVER_DATA server_data);
 	void CS_MOVE();
 	void CS_START();
 
@@ -30,6 +29,8 @@ public:
 	bool getStart() { return m_start; }
 	void setStart(bool end) { m_start = end; }
 	SOCKET getSock() { return m_sock; }
+
+	bool restart = false;
 	bool gameover = false;
 	bool gameclear = false;
 	int game_time;

@@ -1,8 +1,7 @@
 #pragma once
-//192.168.35.11:59960  //13.94.47.61:9354
-#define SERVERIP "192.168.219.104"
+#define SERVERIP "127.0.0.1"
 #define BUFSIZE 512
-#define GOALLINE 60
+#define GOALLINE 100
 constexpr int SERVERPORT = 9000;
 
 // CLIENT DATA TYPE
@@ -19,9 +18,8 @@ constexpr unsigned char GAME_START = 0x13;
 constexpr unsigned char GAME_OVER = 0x14;
 constexpr unsigned char GAME_CLEAR = 0x15;
 constexpr unsigned char TIME = 0x16;
-constexpr unsigned char START = 0x17;
-constexpr unsigned char REJECT = 0x18;
-constexpr unsigned char RESTART = 0x19;
+constexpr unsigned char REJECT = 0x17;
+constexpr unsigned char RESTART = 0x18;
 
 // LOCATION гою╖ SUBDATATYPE
 constexpr unsigned char PLAYER = 0x21;

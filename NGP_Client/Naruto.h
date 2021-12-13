@@ -21,38 +21,11 @@ bool version2 = false;
 bool version3 = false;
 bool perfectclear = false;
 
-/*
-나루토의 위치 : narutoCoord(컴그팀플.cpp drawScene에서 계속 해서 업데이트)
-*/
-
-//명령 관련
-bool boolw = false;
-bool boola = false;
-bool boolgravity = false;
-bool boold = false;
-bool boolj = false;
-bool boolj2 = false;
-bool sound_6 = true;
-bool sound_7 = true;
-//주인공이동(x,y,z순)
-float transj = 0.0f;
-float pointx = 2.25f;
-float pointz = 0.0f;
-
 glm::vec3 narutoCoord[3]{ glm::vec3(0.0f, 0.0f, 0.0f) };
 
-
 float setat = 0.0f;      //이동시 다리가 움직이는 애니메이션을 하기위한 각도
-float setam = 180.0f;      //몸통 회전을 맡음
-float setaRighthand = 60.0f;
-float setaLefthand = 60.0f;
-
-bool map2 = false;
 
 void drawNaruto(Network network, GLuint program, int vertexCount, GLuint vao[], GLuint vbo[],glm::mat4 viewMatrix, glm::mat4 projectionMatrix, int id) {
-    //for (const auto& client : net.clients) {
-          
-
         //행렬 
         glm::mat4 transformMatrix(1.0f);      //월드변환
         glm::mat4 basicChange(1.0f);         //기본축사용시
@@ -76,7 +49,7 @@ void drawNaruto(Network network, GLuint program, int vertexCount, GLuint vao[], 
         //명령
         scalehandfoot = glm::scale(basicChange, glm::vec3(0.1f, 0.5f, 0.1f));         //손과발의 크기 축소(기본행렬)
         transMatrixpoint = glm::translate(transMatrixpoint, glm::vec3(narutoCoord[id].x, narutoCoord[id].y, narutoCoord[id].z));
-        rotateMatrixm = glm::rotate(rotateMatrixm, glm::radians(setam), glm::vec3(0.0f, 1.0f, 0.0f));      //몸통 회전
+        rotateMatrixm = glm::rotate(rotateMatrixm, glm::radians(180.f), glm::vec3(0.0f, 1.0f, 0.0f));      //몸통 회전
 
 
         glUseProgram(program);
@@ -179,7 +152,7 @@ void drawNaruto(Network network, GLuint program, int vertexCount, GLuint vao[], 
         basicChange = glm::mat4(1.0f);
         basicChange = glm::translate(basicChange, glm::vec3(0.0f, -0.25f, 0.0));      //회전축 이동
         transformMatrix = basicChange * transformMatrix;
-        rotateMatrixt = glm::rotate(rotateMatrixt, glm::radians(setaRighthand), glm::vec3(1.0f, 0.0f, 0.0f));   //이동시 팔의 움직임
+        //rotateMatrixt = glm::rotate(rotateMatrixt, glm::radians(setaRighthand), glm::vec3(1.0f, 0.0f, 0.0f));   //이동시 팔의 움직임
         transformMatrix = rotateMatrixt * transformMatrix;
         basicChange = glm::mat4(1.0f);
         basicChange = glm::translate(basicChange, glm::vec3(-0.55f, 0.9f, 0.0));      //본래의 위치로 이동
@@ -211,7 +184,7 @@ void drawNaruto(Network network, GLuint program, int vertexCount, GLuint vao[], 
         basicChange = glm::translate(basicChange, glm::vec3(0.0f, -0.25f, 0.0));      //회전축 이동
         transformMatrix = basicChange * transformMatrix;
         rotateMatrixt = glm::mat4(1.0f);
-        rotateMatrixt = glm::rotate(rotateMatrixt, glm::radians(setaLefthand), glm::vec3(1.0f, 0.0f, 0.0f));   //이동시 팔의 움직임
+        //rotateMatrixt = glm::rotate(rotateMatrixt, glm::radians(setaLefthand), glm::vec3(1.0f, 0.0f, 0.0f));   //이동시 팔의 움직임
         transformMatrix = rotateMatrixt * transformMatrix;
         basicChange = glm::mat4(1.0f);
         basicChange = glm::translate(basicChange, glm::vec3(0.55f, 0.9f, 0.0));      //본래의 위치로 이동

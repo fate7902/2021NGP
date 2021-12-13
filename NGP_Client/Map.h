@@ -1,10 +1,3 @@
-/*
-11/24 으범이에게
-    빌딩건물 추가시
-        -#define BULDINGNUMBER 의 숫자 증가시키기
-        -void InitMAP에서 buildingCoord(빌딩의 좌표)와 handrailCoord(난간의 좌표)추가시키기
-*/
-
 #pragma once
 #include <iostream>
 #include <cstdio>
