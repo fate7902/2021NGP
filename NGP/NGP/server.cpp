@@ -10,7 +10,7 @@
 using namespace std;
 
 #define MAXTIME 100
-#define INFINITE -9999
+#define MINFINITE -9999
 #define INITPOSX 0
 #define INITPOSY 0
 #define INITPOSZ 0
@@ -21,16 +21,13 @@ using namespace std;
 #define OBJECTPOSX 5
 
 CLIENT_INFO clientInfo[3];
-// 0: ï¿½ï¿½ï¿½ï¿½ 1: Æ®ï¿½ï¿½Ä¿ 2, 3: ï¿½ï¿½Ö¹ï¿½
+// 0: º¸½º 1: Æ®·¡Ä¿ 2, 3: Àå¾Ö¹°
 OBJECT_INFO objectInfo[4];
 
 bool gameStart = false;
 bool goal = false;
 float dx = 0.12;
 float dz = 0.12;
-
-int g_start;
-int g_end;
 
 default_random_engine dre{ random_device{}() };
 uniform_int_distribution<> uid{ BALL, BULLDOZER };
@@ -64,14 +61,14 @@ void SC_GAMESTART()
 
 void SC_LOGIN(int id)
 {
-    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    // Àü´ÞÇÒ À¯ÀúÀÇ Á¤º¸ ¼ÂÆÃ
     SERVER_DATA server_data;
     server_data.dataType = LOGIN;
     server_data.id = clientInfo[id].id;
     server_data.x = clientInfo[id].x;
     server_data.y = clientInfo[id].y;
     server_data.z = clientInfo[id].z;
-    cout << "[" << server_data.id << "]ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½Î±ï¿½ï¿½ï¿½" << endl;
+    cout << "[" << server_data.id << "]¹ø Å¬¶ó ·Î±×ÀÎ" << endl;
 
     for (const auto& clients : clientInfo) {
         if (id == clients.id) {
@@ -135,9 +132,9 @@ void SC_INIT() {
     objectInfo[1].z = 10;
 
     for (int i = 2; i < 4; ++i) {
-        objectInfo[i].x = INFINITE;
+        objectInfo[i].x = MINFINITE;
         objectInfo[i].y = INITPOSY;
-        objectInfo[i].z = INFINITE;
+        objectInfo[i].z = MINFINITE;
         objectInfo[i].moving = false;
     }
 
@@ -189,7 +186,7 @@ void COLL_CHECK(OBJECT_INFO object_info)
         if (clientInfo[i].alive) {
             if (object_info.id == 1) {
                 if (object_info.z <= clientInfo[i].z) {
-                    cout << "[" << clientInfo[i].id << "]ï¿½ï¿½ Å¬ï¿½ï¿½ Æ®ï¿½ï¿½Ä¿ ï¿½æµ¹" << endl;
+                    cout << "[" << clientInfo[i].id << "]¹ø Å¬¶ó Æ®·¡Ä¿ Ãæµ¹" << endl;
                     SC_COLL(i);
                 }
             }
@@ -198,12 +195,11 @@ void COLL_CHECK(OBJECT_INFO object_info)
                 if (object_info.objectType != NULL) {
 
                     if ((clientInfo[i].x - USERSIZE < object_info.x - OBJECTSIZE) &&
-                        (clientInfo[i].x + USERSIZE > object_info.x - OBJECTSIZE) &&
                         (object_info.x - OBJECTSIZE < clientInfo[i].x + USERSIZE) &&
                         (clientInfo[i].x + USERSIZE < object_info.x + OBJECTSIZE) &&
                         (object_info.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
                         (clientInfo[i].z - USERSIZE <= object_info.z + OBJECTSIZE2)) {
-                        cout << "[" << clientInfo[i].id << "]ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½Ö¹ï¿½ ï¿½æµ¹" << endl;
+                        cout << "[" << clientInfo[i].id << "]¹ø Å¬¶ó Àå¾Ö¹° Ãæµ¹" << endl;
                         SC_COLL(i);
                     }
                     else if ((object_info.x - OBJECTSIZE <= clientInfo[i].x - USERSIZE) &&
@@ -212,16 +208,15 @@ void COLL_CHECK(OBJECT_INFO object_info)
                         (clientInfo[i].x + USERSIZE <= object_info.x + OBJECTSIZE) &&
                         (object_info.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
                         (clientInfo[i].z - USERSIZE <= object_info.z + OBJECTSIZE2)) {
-                        cout << "[" << clientInfo[i].id << "]ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½Ö¹ï¿½ ï¿½æµ¹" << endl;
+                        cout << "[" << clientInfo[i].id << "]¹ø Å¬¶ó Àå¾Ö¹° Ãæµ¹" << endl;
                         SC_COLL(i);
                     }
                     else if ((clientInfo[i].x - USERSIZE < object_info.x + OBJECTSIZE) &&
                         (object_info.x + OBJECTSIZE < clientInfo[i].x + USERSIZE) &&
                         (object_info.x - OBJECTSIZE < clientInfo[i].x - USERSIZE) &&
-                        (clientInfo[i].x - USERSIZE < object_info.x + OBJECTSIZE) &&
                         (object_info.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
                         (clientInfo[i].z - USERSIZE <= object_info.z + OBJECTSIZE2)) {
-                        cout << "[" << clientInfo[i].id << "]ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½Ö¹ï¿½ ï¿½æµ¹" << endl;
+                        cout << "[" << clientInfo[i].id << "]¹ø Å¬¶ó Àå¾Ö¹° Ãæµ¹" << endl;
                         SC_COLL(i);
                     }
                 }
@@ -266,7 +261,7 @@ void SC_SEND(CLIENT_DATA clientData)
         clientInfo[id].y = 0;
         clientInfo[id].z = 0;
 
-        // 3ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ 1ï¿½ï¿½ ï¿½ï¿½Ù·È´Ù°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        // 3¸íÀÇ À¯Àú°¡ Á¢¼ÓÇÏ¸é 1ÃÊ ±â´Ù·È´Ù°¡ °ÔÀÓ ½ÃÀÛ
         if (clientInfo[0].alive && clientInfo[1].alive && clientInfo[2].alive) {
             int start_time = clock();
             int end_time = clock();
@@ -326,15 +321,15 @@ void SC_SEND(CLIENT_DATA clientData)
 
 DWORD WINAPI SC_TIME(LPVOID arg)
 {
-    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    // Àü´ÞÇÒ À¯ÀúÀÇ Á¤º¸ ¼ÂÆÃ
     SERVER_DATA server_data;
     server_data.dataType = TIME;
-    server_data.time = MAXTIME;      // ï¿½Ê±ï¿½ ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
-    auto start = INFINITE;
+    server_data.time = MAXTIME;      // ÃÊ±â ½Ã°£ Á¦ÇÑ °ª ¼¼ÆÃ
+    auto start = MINFINITE;
     int send_time = MAXTIME + 1;
     while (true) {
         if (true == gameStart) {
-            if (INFINITE == start)
+            if (MINFINITE == start)
                 start = clock();
             if (server_data.time != send_time) {
                 for (const auto& clients : clientInfo)
@@ -364,7 +359,7 @@ DWORD WINAPI S_RECV_PACKET(LPVOID arg)
     int addrlen;
     CLIENT_DATA clientData;
 
-    // Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+    // Å¬¶óÀÌ¾ðÆ® Á¤º¸ ¾ò±â
     addrlen = sizeof(clientaddr);
     getpeername(client_sock, (SOCKADDR*)&clientaddr, &addrlen);
     while (true) {
@@ -373,7 +368,6 @@ DWORD WINAPI S_RECV_PACKET(LPVOID arg)
             break;
 
         SC_SEND(clientData);
-        g_start = clock();
     }
     closesocket(client_sock);
     return 0;
@@ -381,8 +375,8 @@ DWORD WINAPI S_RECV_PACKET(LPVOID arg)
 
 DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 {
-    auto start_wait = INFINITE;
-    auto end_wait = INFINITE;
+    auto start_wait = MINFINITE;
+    auto end_wait = MINFINITE;
     int firstline = 0;
     SERVER_DATA server_data;
     server_data.dataType = LOCATION;
@@ -390,7 +384,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 
     while (true) {
         if (true == gameStart) {
-            if (start_wait == INFINITE) {
+            if (start_wait == MINFINITE) {
                 start_wait = clock();
             }
             else {
@@ -409,7 +403,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
                         default:
                             if (objects.objectType == NULL) {
                                 if (2 == objects.id || 3 == objects.id) {
-                                    if (2 == objects.id) {   // id:2 ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï±ï¿½ 
+                                    if (2 == objects.id) {   // id:2 ¸ÕÀú ¶óÀÎ Á¤ÇÏ±â 
                                         firstline = IntUid(dre);
                                     }
                                     switch (firstline)
@@ -434,7 +428,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
                                         break;
                                     }
 
-                                    objects.z = objectInfo[0].z - 3;        //ï¿½ï¿½Ö¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
+                                    objects.z = objectInfo[0].z - 3;        //Àå¾Ö¹° Á¾·ù Á¤ÇÔ 
                                     if (2 == objects.id)
                                         objects.objectType = BULLDOZER;
                                     else
@@ -442,7 +436,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
                                     objects.moving = true;
                                 }
                             }
-                            else {   // ï¿½ï¿½Ö¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                            else {   // Àå¾Ö¹° Á¾·ù ´Ù Á¤ÇØÁö¸é ¿òÁ÷¿©
                                 if (true == objects.moving) {
                                     objects.z += 0.8;
                                 }
@@ -472,13 +466,13 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
                             }
                         }
                     }
-                    start_wait = INFINITE;
+                    start_wait = MINFINITE;
                 }
             }
         }
         else {
-            start_wait = INFINITE;
-            end_wait = INFINITE;
+            start_wait = MINFINITE;
+            end_wait = MINFINITE;
             firstline = 0;
         }
     }
@@ -493,7 +487,7 @@ int main(int argc, char* argv[]) {
 
     SOCKET listen_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (INVALID_SOCKET == listen_sock)
-        cout << "ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½" << endl;
+        cout << "¼ÒÄÏ¿¡·¯" << endl;
 
     SOCKADDR_IN serveraddr;
     ZeroMemory(&serveraddr, sizeof(serveraddr));
@@ -502,11 +496,11 @@ int main(int argc, char* argv[]) {
     serveraddr.sin_port = htons(SERVERPORT);
     retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
     if (SOCKET_ERROR == retval)
-        cout << "ï¿½Ö¼ï¿½ï¿½Ò´ç¿¡ï¿½ï¿½" << endl;
+        cout << "ÁÖ¼ÒÇÒ´ç¿¡·¯" << endl;
 
     retval = listen(listen_sock, SOMAXCONN);
     if (SOCKET_ERROR == retval)
-        cout << "ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½" << endl;
+        cout << "¿¬°á¿äÃ»¿¡·¯" << endl;
 
     SOCKET client_sock;
     SOCKADDR_IN clientaddr;
@@ -514,7 +508,7 @@ int main(int argc, char* argv[]) {
     HANDLE hThread;
     int userCount = 0;
 
-    // ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    // ½Ã°£ ½º·¹µå, ¿ÀºëÁ§Æ® ÀÌµ¿ ½º·¹µå »ý¼º
     hThread = CreateThread(NULL, 0, SC_TIME, NULL, 0, NULL);
     hThread = CreateThread(NULL, 0, SC_OBJECT_MOVE, NULL, 0, NULL);
 
@@ -522,11 +516,10 @@ int main(int argc, char* argv[]) {
         addrlen = sizeof(clientaddr);
         client_sock = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
         if (INVALID_SOCKET == client_sock) {
-            cout << "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" << endl;
+            cout << "¿¬°á¼ö¶ô¿¡·¯" << endl;
             break;
         }
         hThread = CreateThread(NULL, 0, S_RECV_PACKET, (LPVOID)client_sock, 0, NULL);
-
         if (NULL == hThread)
             closesocket(client_sock);
         else
@@ -540,7 +533,7 @@ int main(int argc, char* argv[]) {
                 continue;
             }
             if (false == gameStart) {
-                //// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                //// Á¢¼ÓÇÑ À¯Àú ÃÊ±â Á¤º¸ ¼ÂÆÃ
                 clients.sock = client_sock;
                 clients.state = FULL;
                 clients.id = cnt;

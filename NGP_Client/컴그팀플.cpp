@@ -193,7 +193,6 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 
     glutReshapeFunc(reshape);
-
     net.m_time_start = clock();
     glutKeyboardFunc(Keyboard);
     glutKeyboardUpFunc(KeyboardUp);
@@ -218,7 +217,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
     auto delay = net.m_time_end - net.m_time_start;
     while (delay < 15) {
         delay = 15;
-        Sleep(delay);      // 0.03초에 한번씩  -> 대락 30프레임
+        Sleep(delay); 
     }
 
     g_time = net.game_time;
@@ -230,18 +229,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
     }
 
     if (key_w_state || key_s_state || key_a_state || key_d_state) {
-        //if (time_start == -100) {
-        //    time_start = clock();
-        //    time_end = clock();
-        //}
-
-        //if (time_end - time_start > 5) {
-        //    time_start = -100;
-        //    net.CS_MOVE();
-        //}
         net.CS_MOVE();
-        /*else
-            time_end = clock();*/
     }
 
     //--- 변경된 배경색 설정
@@ -478,7 +466,6 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
     }
 
     draw_stuff();  //텍스트
-
 
     glutSwapBuffers(); // 화면에 출력하기
     glutPostRedisplay();
