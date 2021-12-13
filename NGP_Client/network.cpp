@@ -4,7 +4,7 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 {
 	switch (server_data.dataType)
 	{
-	case LOCATION: // 플레이어 위치값
+	case LOCATION:
 		switch (server_data.subDataType)
 		{
 		case PLAYER:
@@ -25,7 +25,7 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 			break;
 		}
 		break;
-	case LOGIN: // 플레이어 접속
+	case LOGIN:
 		switch (server_data.subDataType) {
 		// m_id : 자신 클라이언트 id
 		// m_clients : 모든 클라이언트
@@ -43,12 +43,12 @@ void Network::C_UPDATE(SERVER_DATA server_data)
 	case LOGOUT:
 		clients[server_data.id].alive = false;
 		break;
-	case GAME_START:   // 게임 시작
+	case GAME_START:
 		gameover = false;
 		gameclear = false;
 		m_start = true;
 		break;
-	case TIME: // 시간
+	case TIME:
 		game_time = server_data.time;
 		break;
 	case GAME_OVER:

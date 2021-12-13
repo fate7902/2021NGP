@@ -6,34 +6,26 @@
 #include <iostream>
 #include <time.h>
 #include <random>
-//#include <queue>
-//#include <mutex>
 #include "protocol.h"
 using namespace std;
 
 #define MAXTIME 100
 #define INFINITE -9999
-#define MOVEDELAY 6000
 #define INITPOSX 0
 #define INITPOSY 0
 #define INITPOSZ 0
 #define USERSIZE 0.5
 #define OBJECTSIZE 1.5
 #define OBJECTSIZE2 0.5
-#define GOALPOSZ -500
 #define COUNTDOWN 10
 #define OBJECTPOSX 5
 
-//queue<CLIENT_DATA*> recvQueue;
-//mutex recvLock;
 CLIENT_INFO clientInfo[3];
-// 0: º¸½º 1: µû¶ó¿À´Â Àå¾Ö¹° 2, 3: Àå¾Ö¹°
+// 0: ï¿½ï¿½ï¿½ï¿½ 1: Æ®ï¿½ï¿½Ä¿ 2, 3: ï¿½ï¿½Ö¹ï¿½
 OBJECT_INFO objectInfo[4];
 
 bool gameStart = false;
 bool goal = false;
-int die_cnt;
-/* ÀÇ¹ü - ÀÌµ¿½Ã ÀÌµ¿ Å©±â ¼³Á¤ÇÏ±â(º¯¼ö Å¸ÀÔ º¯°æ °¡´É) */
 float dx = 0.12;
 float dz = 0.12;
 
@@ -72,14 +64,14 @@ void SC_GAMESTART()
 
 void SC_LOGIN(int id)
 {
-    // Àü´ÞÇÒ À¯ÀúÀÇ Á¤º¸ ¼ÂÆÃ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     SERVER_DATA server_data;
     server_data.dataType = LOGIN;
     server_data.id = clientInfo[id].id;
     server_data.x = clientInfo[id].x;
     server_data.y = clientInfo[id].y;
     server_data.z = clientInfo[id].z;
-    cout << "[" << server_data.id << "]¹ø Å¬¶ó ·Î±×ÀÎ" << endl;
+    cout << "[" << server_data.id << "]ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½Î±ï¿½ï¿½ï¿½" << endl;
 
     for (const auto& clients : clientInfo) {
         if (id == clients.id) {
@@ -103,7 +95,74 @@ void SC_LOGIN(int id)
 
 }
 
-/* ÀÇ¹ü -  Goal_Check()¿Í Coll_check() ÀÛ¼ºÇÏ±â */
+void SC_INIT() {
+    gameStart = false;
+
+    for (auto& clients : clientInfo) {
+        clients.x = -3 + (float)(clients.id * 3);
+        clients.y = INITPOSY;
+        clients.z = INITPOSZ;
+    }
+    for (const auto& clients : clientInfo) {
+        for (const auto& client : clientInfo) {
+            SERVER_DATA server_data;
+            server_data.dataType = LOCATION;
+            server_data.subDataType = PLAYER;
+            server_data.id = client.id;
+            server_data.x = client.x;
+            server_data.y = client.y;
+            server_data.z = client.z;
+            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+
+            SERVER_DATA server_data2;
+            server_data2.dataType = RESTART;
+            server_data2.id = client.id;
+            send(clients.sock, (char*)&server_data2, sizeof(SERVER_DATA), 0);
+        }
+    }
+
+    for (int i = 0; i < 4; ++i) {
+        objectInfo[i].id = i;
+        objectInfo[i].objectType = NULL;
+    }
+
+    objectInfo[0].x = INITPOSX;
+    objectInfo[0].y = INITPOSY;
+    objectInfo[0].z = -20;
+
+    objectInfo[1].x = INITPOSX;
+    objectInfo[1].y = INITPOSY;
+    objectInfo[1].z = 10;
+
+    for (int i = 2; i < 4; ++i) {
+        objectInfo[i].x = INFINITE;
+        objectInfo[i].y = INITPOSY;
+        objectInfo[i].z = INFINITE;
+        objectInfo[i].moving = false;
+    }
+
+    for (const auto& clients : clientInfo) {
+        SERVER_DATA server_data;
+        server_data.dataType = LOCATION;
+        server_data.subDataType = OBJECT;
+        for (const auto& objects : objectInfo) {
+            server_data.objectInfo = objects;
+            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+        }
+    }
+}
+
+void SC_COLL(int num)
+{
+    SERVER_DATA server_data;
+    server_data.dataType = GAME_OVER;
+    server_data.id = num;
+    clientInfo[num].alive = false;
+    for (const auto& clients : clientInfo) {
+        send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
+    }
+}
+
 void GOAL_CHECK(CLIENT_INFO client_Info)
 {
     if (client_Info.z <= -GOALLINE) {
@@ -120,61 +179,7 @@ void GOAL_CHECK(CLIENT_INFO client_Info)
             clients.alive = false;
         }
         goal = true;
-        gameStart = false;
-
-        for (auto& clients : clientInfo) {
-            clients.x = -3 + (float)(clients.id * 3);
-            clients.y = 0;
-            clients.z = 0;
-        }
-        for (const auto& clients : clientInfo) {
-            for (const auto& client : clientInfo) {
-                SERVER_DATA server_data;
-                server_data.dataType = LOCATION;
-                server_data.subDataType = PLAYER;
-                server_data.id = client.id;
-                server_data.x = client.x;
-                server_data.y = client.y;
-                server_data.z = client.z;
-                send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-
-                SERVER_DATA server_data2;
-                server_data2.dataType = RESTART;
-                server_data2.id = client.id;
-                send(clients.sock, (char*)&server_data2, sizeof(SERVER_DATA), 0);
-            }
-        }
-
-        for (int i = 0; i < 4; ++i) {
-            objectInfo[i].id = i;
-            objectInfo[i].objectType = NULL;
-        }
-
-        objectInfo[0].x = 0;
-        objectInfo[0].y = 0;
-        objectInfo[0].z = -20;
-
-        objectInfo[1].x = 0;
-        objectInfo[1].y = 0;
-        objectInfo[1].z = 10;         // BOSS¿Í 20Â÷ÀÌ°¡ ³ª¾ß ÇÑ´Ù.
-
-        for (int i = 2; i < 4; ++i) {
-            objectInfo[i].x = -9999;
-            objectInfo[i].y = 0;
-            objectInfo[i].z = -9999;
-            objectInfo[i].moving = false;
-        }
-
-        for (const auto& clients : clientInfo) {
-            SERVER_DATA server_data;
-            server_data.dataType = LOCATION;
-            server_data.subDataType = OBJECT;
-            for (const auto& objects : objectInfo) {
-                server_data.objectInfo = objects;
-                send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-            }
-        }
-
+        SC_INIT();
     }
 }
 
@@ -182,16 +187,10 @@ void COLL_CHECK(OBJECT_INFO object_info)
 {
     for (int i = 0; i < 3; ++i) {
         if (clientInfo[i].alive) {
-            if (object_info.id == 1) {                   //µÚ¿¡¼­ ¿À´Â Àå¾Ö¹°°ú´Â Ãæµ¹ ok
+            if (object_info.id == 1) {
                 if (object_info.z <= clientInfo[i].z) {
-                    cout << "[" << clientInfo[i].id << "]¹ø Å¬¶ó Æ®·¡Ä¿ Ãæµ¹" << endl;
-                    SERVER_DATA server_data;
-                    server_data.dataType = GAME_OVER;
-                    server_data.id = i;
-                    clientInfo[i].alive = false;
-                    for (const auto& clients : clientInfo) {
-                        send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-                    }
+                    cout << "[" << clientInfo[i].id << "]ï¿½ï¿½ Å¬ï¿½ï¿½ Æ®ï¿½ï¿½Ä¿ ï¿½æµ¹" << endl;
+                    SC_COLL(i);
                 }
             }
             else if (object_info.id != 0 && object_info.id != 1) {
@@ -204,14 +203,8 @@ void COLL_CHECK(OBJECT_INFO object_info)
                         (clientInfo[i].x + USERSIZE < object_info.x + OBJECTSIZE) &&
                         (object_info.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
                         (clientInfo[i].z - USERSIZE <= object_info.z + OBJECTSIZE2)) {
-                        SERVER_DATA server_data;
-                        server_data.dataType = GAME_OVER;
-                        server_data.id = i;
-                        clientInfo[i].alive = false;
-                        for (const auto& clients : clientInfo) {
-                            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-                        }
-
+                        cout << "[" << clientInfo[i].id << "]ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½Ö¹ï¿½ ï¿½æµ¹" << endl;
+                        SC_COLL(i);
                     }
                     else if ((object_info.x - OBJECTSIZE <= clientInfo[i].x - USERSIZE) &&
                         (clientInfo[i].x - USERSIZE <= object_info.x + OBJECTSIZE) &&
@@ -219,15 +212,8 @@ void COLL_CHECK(OBJECT_INFO object_info)
                         (clientInfo[i].x + USERSIZE <= object_info.x + OBJECTSIZE) &&
                         (object_info.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
                         (clientInfo[i].z - USERSIZE <= object_info.z + OBJECTSIZE2)) {
-
-                        SERVER_DATA server_data;
-                        server_data.dataType = GAME_OVER;
-                        server_data.id = i;
-                        clientInfo[i].alive = false;
-                        for (const auto& clients : clientInfo) {
-                            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-                        }
-
+                        cout << "[" << clientInfo[i].id << "]ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½Ö¹ï¿½ ï¿½æµ¹" << endl;
+                        SC_COLL(i);
                     }
                     else if ((clientInfo[i].x - USERSIZE < object_info.x + OBJECTSIZE) &&
                         (object_info.x + OBJECTSIZE < clientInfo[i].x + USERSIZE) &&
@@ -235,14 +221,8 @@ void COLL_CHECK(OBJECT_INFO object_info)
                         (clientInfo[i].x - USERSIZE < object_info.x + OBJECTSIZE) &&
                         (object_info.z - OBJECTSIZE2 <= clientInfo[i].z - USERSIZE) &&
                         (clientInfo[i].z - USERSIZE <= object_info.z + OBJECTSIZE2)) {
-
-                        SERVER_DATA server_data;
-                        server_data.dataType = GAME_OVER;
-                        server_data.id = i;
-                        clientInfo[i].alive = false;
-                        for (const auto& clients : clientInfo) {
-                            send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-                        }
+                        cout << "[" << clientInfo[i].id << "]ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½Ö¹ï¿½ ï¿½æµ¹" << endl;
+                        SC_COLL(i);
                     }
                 }
             }
@@ -250,58 +230,7 @@ void COLL_CHECK(OBJECT_INFO object_info)
     }
 
     if (!clientInfo[0].alive && !clientInfo[1].alive && !clientInfo[2].alive) {
-        gameStart = false;
-        for (auto& clients : clientInfo) {
-            clients.x = -3 + (float)(clients.id * 3);
-            clients.y = 0;
-            clients.z = 0;
-        }
-        for (const auto& clients : clientInfo) {
-            for (const auto& client : clientInfo) {
-                SERVER_DATA server_data;
-                server_data.dataType = LOCATION;
-                server_data.subDataType = PLAYER;
-                server_data.id = client.id;
-                server_data.x = client.x;
-                server_data.y = client.y;
-                server_data.z = client.z;
-                send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-
-                SERVER_DATA server_data2;
-                server_data2.dataType = RESTART;
-                server_data2.id = client.id;
-                send(clients.sock, (char*)&server_data2, sizeof(SERVER_DATA), 0);
-            }
-        }
-
-        for (int i = 0; i < 4; ++i) {
-            objectInfo[i].id = i;
-            objectInfo[i].objectType = NULL;
-        }
-
-        objectInfo[0].x = 0;
-        objectInfo[0].y = 0;
-        objectInfo[0].z = -20;
-
-        objectInfo[1].x = 0;
-        objectInfo[1].y = 0;
-        objectInfo[1].z = 10;         // BOSS¿Í 20Â÷ÀÌ°¡ ³ª¾ß ÇÑ´Ù.
-
-        for (int i = 2; i < 4; ++i) {
-            objectInfo[i].x = -9999;
-            objectInfo[i].y = 0;
-            objectInfo[i].z = -9999;
-            objectInfo[i].moving = false;
-        }
-        for (const auto& clients : clientInfo) {
-            SERVER_DATA server_data;
-            server_data.dataType = LOCATION;
-            server_data.subDataType = OBJECT;
-            for (const auto& objects : objectInfo) {
-                server_data.objectInfo = objects;
-                send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-            }
-        }
+        SC_INIT();
     }
 
 }
@@ -337,7 +266,7 @@ void SC_SEND(CLIENT_DATA clientData)
         clientInfo[id].y = 0;
         clientInfo[id].z = 0;
 
-        // 3¸íÀÇ À¯Àú°¡ Á¢¼ÓÇÏ¸é °ÔÀÓ ½ÃÀÛ
+        // 3ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ 1ï¿½ï¿½ ï¿½ï¿½Ù·È´Ù°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         if (clientInfo[0].alive && clientInfo[1].alive && clientInfo[2].alive) {
             int start_time = clock();
             int end_time = clock();
@@ -353,7 +282,7 @@ void SC_SEND(CLIENT_DATA clientData)
 
             objectInfo[1].x = 0;
             objectInfo[1].y = 0;
-            objectInfo[1].z = 10;         // BOSS¿Í 20Â÷ÀÌ°¡ ³ª¾ß ÇÑ´Ù.
+            objectInfo[1].z = 10;
 
             for (int i = 2; i < 4; ++i) {
                 objectInfo[i].x = -9999;
@@ -391,17 +320,16 @@ void SC_SEND(CLIENT_DATA clientData)
 
         for (const auto& clients : clientInfo) 
             send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-        // À§¿¡ ÀÌµ¿½ÃÅ² À¯Àú °á½ÂÁ¡ Åë°ú¿©ºÎ ÆÇ´Ü
         GOAL_CHECK(clientInfo[id]);
     }
 }
 
 DWORD WINAPI SC_TIME(LPVOID arg)
 {
-    // Àü´ÞÇÒ À¯ÀúÀÇ Á¤º¸ ¼ÂÆÃ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     SERVER_DATA server_data;
     server_data.dataType = TIME;
-    server_data.time = MAXTIME;      // ÃÊ±â ½Ã°£ Á¦ÇÑ °ª ¼¼ÆÃ
+    server_data.time = MAXTIME;      // ï¿½Ê±ï¿½ ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     auto start = INFINITE;
     int send_time = MAXTIME + 1;
     while (true) {
@@ -436,7 +364,7 @@ DWORD WINAPI S_RECV_PACKET(LPVOID arg)
     int addrlen;
     CLIENT_DATA clientData;
 
-    // Å¬¶óÀÌ¾ðÆ® Á¤º¸ ¾ò±â
+    // Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     addrlen = sizeof(clientaddr);
     getpeername(client_sock, (SOCKADDR*)&clientaddr, &addrlen);
     while (true) {
@@ -444,18 +372,6 @@ DWORD WINAPI S_RECV_PACKET(LPVOID arg)
         if (SOCKET_ERROR == retval)
             break;
 
-        // Å¥ »ç¿ë½Ã
-        //recvLock.lock();
-        //recvQueue.emplace(clientData);
-        //recvLock.unlock();
-        //g_end = clock();
-        //auto delay = g_end - g_start;
-        //while (delay < 15) {
-        //    delay = 15;
-        //    Sleep(delay);
-        //}
-        // 
-        // Å¥ ¹Ì»ç¿ë½Ã - ¹ÞÀº µ¥ÀÌÅÍ Àû¿ë ÈÄ send()
         SC_SEND(clientData);
         g_start = clock();
     }
@@ -465,32 +381,26 @@ DWORD WINAPI S_RECV_PACKET(LPVOID arg)
 
 DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 {
-    auto start = INFINITE;
-    auto end = INFINITE;
-    auto start_w = INFINITE;
-    auto end_w = INFINITE;
+    auto start_wait = INFINITE;
+    auto end_wait = INFINITE;
     int firstline = 0;
-    int firstline2 = 0;
-    int secondline = 0;
     SERVER_DATA server_data;
     server_data.dataType = LOCATION;
     server_data.subDataType = OBJECT;
 
     while (true) {
         if (true == gameStart) {
-            if (start_w == INFINITE) {
-                start_w = clock();
+            if (start_wait == INFINITE) {
+                start_wait = clock();
             }
             else {
-                end_w = clock();
-                if (end_w - start_w > 100) {
-                    // -6.25, 0 , 6.25
+                end_wait = clock();
+                if (end_wait - start_wait > 100) {
                     for (auto& objects : objectInfo) {
                         switch (objects.id) {
                         case 0:   // BOSS
                             objects.objectType = BOSS;
                             objects.z -= 0.6;
-
                             break;
                         case 1:   // TRACKER
                             objects.objectType = TRACKER;
@@ -499,8 +409,7 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
                         default:
                             if (objects.objectType == NULL) {
                                 if (2 == objects.id || 3 == objects.id) {
-                                    if (2 == objects.id) {   // id:2 ¸ÕÀú ¶óÀÎ Á¤ÇÏ±â 
-                                        start = clock();
+                                    if (2 == objects.id) {   // id:2 ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï±ï¿½ 
                                         firstline = IntUid(dre);
                                     }
                                     switch (firstline)
@@ -525,52 +434,17 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
                                         break;
                                     }
 
-                                    objects.z = objectInfo[0].z - 3;        //Àå¾Ö¹° Á¾·ù Á¤ÇÔ 
+                                    objects.z = objectInfo[0].z - 3;        //ï¿½ï¿½Ö¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
                                     if (2 == objects.id)
                                         objects.objectType = BULLDOZER;
                                     else
                                         objects.objectType = BALL;
                                     objects.moving = true;
                                 }
-                                /*   else { //¼öÁ¤ÇÏÀÚ
-                                      if (4 == objects.id && false == objects.moving) {
-                                         end = clock();
-                                         if (end - start >= MOVEDELAY) {
-                                            secondline = IntUid(dre);
-                                         }
-                                      }
-                                      if (0 != secondline) {
-                                         switch (secondline)
-                                         {
-                                         case 1:
-                                            objects.line = objects.id - 2;
-                                            objects.x = OBJECTPOSX * (objects.id - 4);
-                                            break;
-                                         case 2:
-                                            if (4 == objects.id) {
-                                               objects.line = 1;
-                                               objects.x -= OBJECTPOSX;
-                                            }
-                                            else {
-                                               objects.line = 3;
-                                               objects.x = OBJECTPOSX;
-                                            }
-                                            break;
-                                         case 3:
-                                            objects.line = objects.id - 3;
-                                            objects.x -= OBJECTPOSX * (5 - objects.id);
-                                            break;
-                                         }
-                                         objects.z = objectInfo[0].z - 3;
-                                         objects.objectType = uid(dre);
-                                         objects.moving = true;
-                                      }
-                                   }*/
                             }
-                            else {   // Àå¾Ö¹° Á¾·ù ´Ù Á¤ÇØÁö¸é ¿òÁ÷¿©
+                            else {   // ï¿½ï¿½Ö¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                                 if (true == objects.moving) {
                                     objects.z += 0.8;
-
                                 }
                             }
                             break;
@@ -579,15 +453,11 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
 
                         for (const auto& clients : clientInfo)
                             send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
-                        cout << "Àå¾Ö¹°[" << objects.id << "] - " << " , " << objects.x << ", " << objects.z << endl;
 
                         COLL_CHECK(objects);
 
                         if (objects.id != 0 && objects.id != 1) {
                             if (true == RESET_OBJECT(objects)) {
-                                if (objects.id == 4)
-                                    secondline = 0;
-
                                 objects.moving = false;
                                 objects.objectType = NULL;
                                 objects.x = INITPOSX;
@@ -602,23 +472,18 @@ DWORD WINAPI SC_OBJECT_MOVE(LPVOID arg)
                             }
                         }
                     }
-                    start_w = INFINITE;
+                    start_wait = INFINITE;
                 }
             }
         }
         else {
-            start = INFINITE;
-            end = INFINITE;
-            start_w = INFINITE;
-            end_w = INFINITE;
+            start_wait = INFINITE;
+            end_wait = INFINITE;
             firstline = 0;
-            firstline2 = 0;
-            secondline = 0;
         }
     }
 }
 
-bool start = false;
 int main(int argc, char* argv[]) {
     int retval;
 
@@ -628,7 +493,7 @@ int main(int argc, char* argv[]) {
 
     SOCKET listen_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (INVALID_SOCKET == listen_sock)
-        cout << "¼ÒÄÏ¿¡·¯" << endl;
+        cout << "ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½" << endl;
 
     SOCKADDR_IN serveraddr;
     ZeroMemory(&serveraddr, sizeof(serveraddr));
@@ -637,11 +502,11 @@ int main(int argc, char* argv[]) {
     serveraddr.sin_port = htons(SERVERPORT);
     retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
     if (SOCKET_ERROR == retval)
-        cout << "ÁÖ¼ÒÇÒ´ç¿¡·¯" << endl;
+        cout << "ï¿½Ö¼ï¿½ï¿½Ò´ç¿¡ï¿½ï¿½" << endl;
 
     retval = listen(listen_sock, SOMAXCONN);
     if (SOCKET_ERROR == retval)
-        cout << "¿¬°á¿äÃ»¿¡·¯" << endl;
+        cout << "ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½" << endl;
 
     SOCKET client_sock;
     SOCKADDR_IN clientaddr;
@@ -649,7 +514,7 @@ int main(int argc, char* argv[]) {
     HANDLE hThread;
     int userCount = 0;
 
-    // ½Ã°£ ½º·¹µå, ¿ÀºëÁ§Æ® ÀÌµ¿ ½º·¹µå »ý¼º
+    // ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     hThread = CreateThread(NULL, 0, SC_TIME, NULL, 0, NULL);
     hThread = CreateThread(NULL, 0, SC_OBJECT_MOVE, NULL, 0, NULL);
 
@@ -657,11 +522,9 @@ int main(int argc, char* argv[]) {
         addrlen = sizeof(clientaddr);
         client_sock = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
         if (INVALID_SOCKET == client_sock) {
-            cout << "¿¬°á¼ö¶ô¿¡·¯" << endl;
+            cout << "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" << endl;
             break;
         }
-
-        g_start = clock();
         hThread = CreateThread(NULL, 0, S_RECV_PACKET, (LPVOID)client_sock, 0, NULL);
 
         if (NULL == hThread)
@@ -677,11 +540,11 @@ int main(int argc, char* argv[]) {
                 continue;
             }
             if (false == gameStart) {
-                //// Á¢¼ÓÇÑ À¯Àú ÃÊ±â Á¤º¸ ¼ÂÆÃ
+                //// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 clients.sock = client_sock;
                 clients.state = FULL;
                 clients.id = cnt;
-                /* ÀÇ¹ü - ÃÊ±â Á¢¼Ó À¯Àú À§Ä¡ ¼ÂÆÃ */
+
                 clients.x = -3 + (cnt * 3);
                 clients.y = 0;
                 clients.z = 0;

@@ -15,17 +15,12 @@
 #include "sound.h"
 #include "map.h"
 
-
-//불도저
-
-
 float G_pointx = 2.25f;
 float G_pointz = 0.0f;
 
 glm::vec3 GoalLineCoord(0.0, 0.0f, 0.0f);
 
-float G_setat = 0.0f;      //이동시 다리가 움직이는 애니메이션을 하기위한 각도
-float G_setam = 180.0f;      //몸통 회전을 맡음
+float G_setam = 180.0f; 
 float G_setaRighthand = 60.0f;
 float G_setaLefthand = 60.0f;
 

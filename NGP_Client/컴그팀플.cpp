@@ -16,12 +16,12 @@
 #include "network.h"
 #include "goalline.h"
 
-#include "..\NGP\NGP\protocol.h"
+//#include "..\NGP\NGP\protocol.h"
 using namespace std;
 
 GLchar* vertexsource, * fragmentsource; // 소스코드 저장 변수
 GLuint vertexshader, fragmentshader; // 세이더 객체
-GLuint s_program[6];      //사용 세이더 프로그램      //0 : 바닥, 1 : 나루토, 2: 건물, 3: 배경
+GLuint s_program[6];      //사용 세이더 프로그램      //0 : 바닥, 1 : 캐릭터, 2: 건물, 3: 배경
 
 //함수의 모음
 GLvoid reshape(int w, int h);
@@ -67,18 +67,13 @@ int indexCounts;
 
 //명령 관련
 
-bool boolt = false;
-bool M_boolt = false; //몬스터 팔 회전 
+bool boolt = false;      // 플레이어 다리 회전
+bool M_boolt = false; // 몬스터 다리 회전 
 
 float setac = 0.0f;   //카메라 공전
 float setay = 0.0f;      //카메라 자전
 float transz = 0.0f;       //카메라 축이동
 
-float speed = 0.17;
-float jumpspeedup = 0.5;
-float jumpspeeddown = 0.05;
-float mainwirespeed = 0.07;
-float subwirespeed = 0.035;
 float setatspeed = 3.0f;        //다리 회전속도
 
 float mouseX;
@@ -303,10 +298,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         //뷰
         //카메라이동추가 
         glm::vec3 cameraPos(1.0f);
-        if (!(map2))
-            cameraPos = glm::vec3((10.0f + narutoCoord[net.getMyId()].z) * sin(glm::radians(setac)), 8.0f, (11.0f + narutoCoord[net.getMyId()].z + 3.0f) * cos(glm::radians(setac)) + pointz);
-        else
-            cameraPos = glm::vec3(narutoCoord[net.getMyId()].x - 11.0f, 5.0f, -11.5 * 6 - 2.5f - 5.5f);
+        cameraPos = glm::vec3((10.0f + narutoCoord[net.getMyId()].z) * sin(glm::radians(setac)), 8.0f, (11.0f + narutoCoord[net.getMyId()].z + 3.0f) * cos(glm::radians(setac)));
+
         glm::vec4 ang(0.0f, 0.0f, 0.0f, 0.0f);
         ang.x = ang.x - ((10.0f + transz) * sin(glm::radians(setac)));
         ang.z = ang.z - ((10.0f + transz) * cos(glm::radians(setac)));
@@ -318,14 +311,10 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         ang.x = ang.x + ((10.0f + transz) * sin(glm::radians(setac)));
         ang.z = ang.z + ((10.0f + transz) * cos(glm::radians(setac)));
 
-
         glm::vec3 cameraDirection(1.0f);
-        if (!(map2))
-            cameraDirection = glm::vec3(ang.x, 3.0f, ang.z + narutoCoord[net.getMyId()].z - 0.2f);
-        else
-            cameraDirection = glm::vec3(ang.x + pointx, 0.0f, -11.5 * 6 - 2.5f - 5.5f);
+        cameraDirection = glm::vec3(ang.x, 3.0f, ang.z + narutoCoord[net.getMyId()].z - 0.2f);
+        
         glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
 
         viewMatrix = glm::lookAt(cameraPos , cameraDirection, cameraUp);
         
@@ -363,7 +352,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         }
     
         scalehandfoot = glm::scale(basicChange, glm::vec3(0.1f, 0.5f, 0.1f));         //손과발의 크기 축소(기본행렬)
-        rotateMatrixm = glm::rotate(rotateMatrixm, glm::radians(setam), glm::vec3(0.0f, 1.0f, 0.0f));      //몸통 회전
+        rotateMatrixm = glm::rotate(rotateMatrixm, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));      //몸통 회전
 
         glDepthFunc(GL_LESS);
         glEnable(GL_DEPTH_TEST);
@@ -424,25 +413,6 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
     }
 
     if (gamestart) {
-        //glUseProgram(s_program[3]);
-        //viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        //transformMatrix = glm::mat4(1.0f);
-        //transformLocation = glGetUniformLocation(s_program[3], "transform");
-        //glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-        //viewLocation = glGetUniformLocation(s_program[3], "viewTransform");
-        //glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-        //projectionMatrix = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
-        //projectionLocation = glGetUniformLocation(s_program[3], "projectionTransform");
-        //glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-        //objColor = glm::vec3(-1.0f, 1.0f, 1.0f);
-        //objcolorLocation = glGetUniformLocation(s_program[3], "objectColor");
-        //glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
-
-        //glBindVertexArray(vao[3]);
-        //glActiveTexture(GL_TEXTURE0);
-        //glBindTexture(GL_TEXTURE_2D, texture3);
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
-
         //startbutton
         glUseProgram(s_program[4]);
         viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -505,26 +475,6 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture5);
         glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        ////startbutton
-        //glUseProgram(s_program[4]);
-        //viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        //transformMatrix = glm::mat4(1.0f);
-        //transformLocation = glGetUniformLocation(s_program[4], "transform");
-        //glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-        //viewLocation = glGetUniformLocation(s_program[4], "viewTransform");
-        //glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-        //projectionMatrix = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
-        //projectionLocation = glGetUniformLocation(s_program[4], "projectionTransform");
-        //glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-        //objColor = glm::vec3(-1.0f, 1.0f, 1.0f);
-        //objcolorLocation = glGetUniformLocation(s_program[4], "objectColor");
-        //glUniform3f(objcolorLocation, objColor.x, objColor.y, objColor.z);
-
-        //glBindVertexArray(vao[4]);
-        //glActiveTexture(GL_TEXTURE0);
-        //glBindTexture(GL_TEXTURE_2D, texture6);
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
     draw_stuff();  //텍스트
@@ -821,7 +771,6 @@ void InitTexture() {
     stbi_image_free(data);
 }
 
-
 void Mouse(int button, int state, int x, int y)
 {
     mouseX = (float)(x - (float)600 / 2.0) * (float)(1.0 / (float)(600 / 2.0));
@@ -855,31 +804,6 @@ GLvoid TimerFunction(int value) {
                 M_boolt = true;
             }
         }
-
-        if (boolj == true) {
-            transj += jumpspeedup; //노트북 0.005
-            if (transj > 2.3f)
-                boolj = false;
-        }
-
-        else if (transj != 0.0f && boolj2) {
-            transj -= jumpspeeddown;    //노트북 0.005
-            if (transj < 0.0f) {
-                transj = 0.0f;
-                boolj2 = false;
-            }
-        }
-
-        if (boolw) { //전진
-            //pointz -= 0.07f;       //노트북 0.007
-            pointz -= 0.2;
-            
-        }
-        else if (boolw2) {
-            pointz -= 0.1;
-        }
-
-        boola = true;
 
        if (boolt) {
            setat += setatspeed;
@@ -928,46 +852,4 @@ GLvoid KeyboardUp(unsigned char key, int x, int y) {
         if (key == 'd')
             key_d_state = false;
     }
-}
-
-void restart() {
-    net.gameover = false;
-    bool boolt = false;
-
-    float setac = 0.0f;   //카메라 공전
-    float setay = 0.0f;      //카메라 자전
-    float transz = 0.0f;       //카메라 축이동
-
-    //명령 관련
-    boolw = false;
-    boola = false;
-    boolgravity = false;
-    boold = false;
-    boolj = false;
-    boolj2 = false;
-    net.gameclear = false;
-    sound_6 = true;
-    //주인공이동(x,y,z순)
-    transj = 0.0f;
-    pointx = 2.25f;
-    pointz = 0.0f;
-
-    narutoCoord[0] = glm::vec3(2.25f, 0.0f, 0.0f);
-
-
-    setat = 0.0f;      //이동시 다리가 움직이는 애니메이션을 하기위한 각도
-    setam = 180.0f;      //몸통 회전을 맡음
-    setaRighthand = 60.0f;
-    setaLefthand = 60.0f;
-
-    map2 = false;
-    version2 = false;
-    version3 = false;
-
-    speed = 0.17;
-    jumpspeedup = 0.5;
-    jumpspeeddown = 0.05;
-    mainwirespeed = 0.07;
-    subwirespeed = 0.035;
-    setatspeed = 3.0f;        //다리 회전속도
 }
