@@ -1,9 +1,0 @@
-void COLL_CHECK(CLIENT_INFO user, OBJ obj)
-{
-   if ((user.z -0.5 > obj.z - 1 && user.z + 0.5 < obj.z +1) && (user.x  - 0.5> obj.x - 2 && user.x +0.5 < obj.x + 2))
-    {
-      gameover = true;
-
-    }
-
-}

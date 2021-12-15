@@ -64,7 +64,7 @@ struct OBJECT_INFO {
 struct SERVER_DATA {
 	unsigned char dataType;
 	unsigned char subDataType;
-	OBJECT_INFO objectInfo;
+    OBJECT_INFO objectInfo;	
 	unsigned short id;
 	float x, y, z;
 	int time;
