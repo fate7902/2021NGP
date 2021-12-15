@@ -465,7 +465,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
-    draw_stuff();  //텍스트
+    if(net.getStart())
+        draw_stuff();  //텍스트
 
     glutSwapBuffers(); // 화면에 출력하기
     glutPostRedisplay();

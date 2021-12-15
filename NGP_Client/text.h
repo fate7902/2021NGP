@@ -152,72 +152,16 @@ draw_stuff()
 
     /* Set up some strings with the characters to draw. */          //여기서 원하는 거 넣기 
     count = 0;
-
     std::string test = to_string(g_time);
-    char const* sibal = test.c_str();
+    char const* time_text = test.c_str();
 
     for (i = 0; i < test.length(); ++i)
-        string[0][i] = sibal[i];
+        string[0][i] = time_text[i];
     string[0][test.length()] = '\0';
 
-    //for (i = 1; i < 32; i++) { /* Skip zero - it's the null terminator! */
-    //    string[0][] = 65;
-    //    count++;
-    //}
-    //string[0][count] = '\0';
-
-   /* count = 0;
-    for (i = 32; i < 64; i++) {
-        string[1][count] = i;
-        count++;
-    }
-    string[1][count] = '\0';
-
-    count = 0;
-    for (i = 64; i < 96; i++) {
-        string[2][count] = i;
-        count++;
-    }
-    string[2][count] = '\0';
-
-    count = 0;
-    for (i = 96; i < 128; i++) {
-        string[3][count] = i;
-        count++;
-    }
-    string[3][count] = '\0';
-
-    count = 0;
-    for (i = 128; i < 160; i++) {
-        string[4][count] = i;
-        count++;
-    }
-    string[4][count] = '\0';
-
-    count = 0;
-    for (i = 160; i < 192; i++) {
-        string[5][count] = i;
-        count++;
-    }
-    string[5][count] = '\0';
-
-    count = 0;
-    for (i = 192; i < 224; i++) {
-        string[6][count] = i;
-        count++;
-    }
-    string[6][count] = '\0';
-
-    count = 0;
-    for (i = 224; i < 256; i++) {
-        string[7][count] = i;
-        count++;
-    }
-    string[7][count] = '\0';*/
 
 
     /* Draw the strings, according to the current mode and font. */
-    //glColor4f(0.0, 1.0, 1.0, 0.0);
     glColor4f(1.0, 1.0, 0.0, 0.0);
     x = -20.0;
     y = 250.0;

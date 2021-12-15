@@ -28,7 +28,8 @@ bool gameStart = false;
 bool goal = false;
 float dx = 0.12;
 float dz = 0.12;
-
+auto timer_start = MINFINITE;
+int send_time = MAXTIME + 1;
 default_random_engine dre{ random_device{}() };
 uniform_int_distribution<> uid{ BALL, BULLDOZER };
 uniform_int_distribution<int> IntUid{ 1, 3 };
@@ -94,6 +95,9 @@ void SC_LOGIN(int id)
 
 void SC_INIT() {
     gameStart = false;
+
+    timer_start = MINFINITE;
+    send_time = MAXTIME + 1;
 
     for (auto& clients : clientInfo) {
         clients.x = -3 + (float)(clients.id * 3);
@@ -325,12 +329,11 @@ DWORD WINAPI SC_TIME(LPVOID arg)
     SERVER_DATA server_data;
     server_data.dataType = TIME;
     server_data.time = MAXTIME;      // 초기 시간 제한 값 세팅
-    auto start = MINFINITE;
-    int send_time = MAXTIME + 1;
+  
     while (true) {
         if (true == gameStart) {
-            if (MINFINITE == start)
-                start = clock();
+            if (MINFINITE == timer_start)
+                timer_start = clock();
             if (server_data.time != send_time) {
                 for (const auto& clients : clientInfo)
                     send(clients.sock, (char*)&server_data, sizeof(SERVER_DATA), 0);
@@ -345,7 +348,7 @@ DWORD WINAPI SC_TIME(LPVOID arg)
         }
         send_time = server_data.time;
         auto end = clock();
-        server_data.time = MAXTIME - (int)((end - start) / 1000);
+        server_data.time = MAXTIME - (int)((end - timer_start) / 1000);
         if (true == goal && server_data.time > COUNTDOWN)
             server_data.time = COUNTDOWN;
     }
